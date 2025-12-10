@@ -7,6 +7,7 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 
 import Header from '../components/Header'
+import { AppWrapper } from '../components/AppWrapper'
 
 import ConvexProvider from '../integrations/convex/provider'
 
@@ -31,7 +32,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'TanStack Start Starter',
+        title: 'Tusmo - Jeu de mots',
       },
     ],
     links: [
@@ -47,14 +48,16 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="fr">
       <head>
         <HeadContent />
       </head>
       <body>
         <ConvexProvider>
-          <Header />
-          {children}
+          <AppWrapper>
+            <Header />
+            {children}
+          </AppWrapper>
           <TanStackDevtools
             config={{
               position: 'bottom-right',

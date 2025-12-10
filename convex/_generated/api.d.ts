@@ -14,6 +14,7 @@ import type * as data_words from "../data/words.js";
 import type * as games from "../games.js";
 import type * as http from "../http.js";
 import type * as rooms from "../rooms.js";
+import type * as users from "../users.js";
 
 import type {
   ApiFromModules,
@@ -28,6 +29,7 @@ declare const fullApi: ApiFromModules<{
   games: typeof games;
   http: typeof http;
   rooms: typeof rooms;
+  users: typeof users;
 }>;
 
 /**

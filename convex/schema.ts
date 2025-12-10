@@ -2,8 +2,27 @@ import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
 import { authTables } from '@convex-dev/auth/server'
 
-export default defineSchema({
+// Extend users table with username
+const extendedAuthTables = {
   ...authTables,
+  users: defineTable({
+    name: v.optional(v.string()),
+    email: v.optional(v.string()),
+    emailVerificationTime: v.optional(v.float64()),
+    image: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    phoneVerificationTime: v.optional(v.float64()),
+    isAnonymous: v.optional(v.boolean()),
+    // Custom fields
+    username: v.optional(v.string()),
+  })
+    .index('email', ['email'])
+    .index('phone', ['phone'])
+    .index('by_username', ['username']),
+}
+
+export default defineSchema({
+  ...extendedAuthTables,
 
   // Daily challenges (generated each day)
   dailyGames: defineTable({
