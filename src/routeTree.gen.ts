@@ -9,16 +9,12 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as RoomRouteImport } from './routes/room'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RoomIndexRouteImport } from './routes/room/index'
+import { Route as RoomCodeRouteImport } from './routes/room/$code'
 import { Route as GameModeRouteImport } from './routes/game/$mode'
 
-const RoomRoute = RoomRouteImport.update({
-  id: '/room',
-  path: '/room',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -27,6 +23,16 @@ const LoginRoute = LoginRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RoomIndexRoute = RoomIndexRouteImport.update({
+  id: '/room/',
+  path: '/room/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RoomCodeRoute = RoomCodeRouteImport.update({
+  id: '/room/$code',
+  path: '/room/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GameModeRoute = GameModeRouteImport.update({
@@ -38,46 +44,43 @@ const GameModeRoute = GameModeRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/room': typeof RoomRoute
   '/game/$mode': typeof GameModeRoute
+  '/room/$code': typeof RoomCodeRoute
+  '/room': typeof RoomIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/room': typeof RoomRoute
   '/game/$mode': typeof GameModeRoute
+  '/room/$code': typeof RoomCodeRoute
+  '/room': typeof RoomIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/room': typeof RoomRoute
   '/game/$mode': typeof GameModeRoute
+  '/room/$code': typeof RoomCodeRoute
+  '/room/': typeof RoomIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/room' | '/game/$mode'
+  fullPaths: '/' | '/login' | '/game/$mode' | '/room/$code' | '/room'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/room' | '/game/$mode'
-  id: '__root__' | '/' | '/login' | '/room' | '/game/$mode'
+  to: '/' | '/login' | '/game/$mode' | '/room/$code' | '/room'
+  id: '__root__' | '/' | '/login' | '/game/$mode' | '/room/$code' | '/room/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
-  RoomRoute: typeof RoomRoute
   GameModeRoute: typeof GameModeRoute
+  RoomCodeRoute: typeof RoomCodeRoute
+  RoomIndexRoute: typeof RoomIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/room': {
-      id: '/room'
-      path: '/room'
-      fullPath: '/room'
-      preLoaderRoute: typeof RoomRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -90,6 +93,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/room/': {
+      id: '/room/'
+      path: '/room'
+      fullPath: '/room'
+      preLoaderRoute: typeof RoomIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/room/$code': {
+      id: '/room/$code'
+      path: '/room/$code'
+      fullPath: '/room/$code'
+      preLoaderRoute: typeof RoomCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/game/$mode': {
@@ -105,8 +122,9 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
-  RoomRoute: RoomRoute,
   GameModeRoute: GameModeRoute,
+  RoomCodeRoute: RoomCodeRoute,
+  RoomIndexRoute: RoomIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
