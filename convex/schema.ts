@@ -1,16 +1,9 @@
 import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
+import { authTables } from '@convex-dev/auth/server'
 
 export default defineSchema({
-  // Users (synced from auth)
-  users: defineTable({
-    name: v.string(),
-    email: v.string(),
-    image: v.optional(v.string()),
-    tokenIdentifier: v.string(),
-  })
-    .index('by_email', ['email'])
-    .index('by_token', ['tokenIdentifier']),
+  ...authTables,
 
   // Daily challenges (generated each day)
   dailyGames: defineTable({
