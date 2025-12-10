@@ -84,4 +84,45 @@ export default defineSchema({
       })
     ),
   }).index('by_date_mode', ['date', 'mode']),
+
+  // User statistics (persistent for leaderboards)
+  userStats: defineTable({
+    odI: v.string(), // odI or guestId
+    name: v.string(),
+    userId: v.optional(v.id('users')),
+
+    // Win streaks
+    dailyWinStreak: v.number(),
+    dailyBestStreak: v.number(),
+    suiteWinStreak: v.number(),
+    suiteBestStreak: v.number(),
+
+    // Games played
+    totalGamesPlayed: v.number(),
+    dailyGamesPlayed: v.number(),
+    suiteGamesPlayed: v.number(),
+    freeGamesPlayed: v.number(),
+
+    // Wins
+    dailyWins: v.number(),
+    suiteWins: v.number(),
+    freeWins: v.number(),
+
+    // Words found
+    totalWordsFound: v.number(),
+
+    // Tracking for streak calculation
+    lastDailyPlayedDate: v.optional(v.string()),
+    lastSuitePlayedDate: v.optional(v.string()),
+
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_odI', ['odI'])
+    .index('by_userId', ['userId'])
+    .index('by_totalWordsFound', ['totalWordsFound'])
+    .index('by_dailyBestStreak', ['dailyBestStreak'])
+    .index('by_suiteBestStreak', ['suiteBestStreak'])
+    .index('by_totalGamesPlayed', ['totalGamesPlayed']),
 })

@@ -24,12 +24,15 @@ export default function Header() {
           <div className="w-8 h-8 rounded-full bg-slate-700 animate-pulse" />
         ) : isAuthenticated ? (
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-700 rounded-full">
+            <Link
+              to="/profile"
+              className="flex items-center gap-2 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-full transition-colors"
+            >
               <User className="w-4 h-4 text-green-400" />
               <span className="text-sm text-white font-medium">
                 {currentUser?.username || currentUser?.name || 'Joueur'}
               </span>
-            </div>
+            </Link>
             <SignOutButton />
           </div>
         ) : (

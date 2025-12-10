@@ -1,23 +1,47 @@
 'use client'
 
 import { createFileRoute, Link, useParams } from '@tanstack/react-router'
-import { useQuery } from 'convex/react'
+import { useQuery, useMutation } from 'convex/react'
 import { useState, useCallback, useEffect } from 'react'
 import { api } from '../../../convex/_generated/api'
 import { Grid, type TileStatus } from '@/components/game/Grid'
 import { Keyboard } from '@/components/game/Keyboard'
 import { Timer } from '@/components/game/Timer'
 import { ArrowLeft, RotateCcw } from 'lucide-react'
-import { useMutation } from 'convex/react'
 
 export const Route = createFileRoute('/game/$mode')({
     component: GamePage,
 })
 
+function getPlayerId(): string {
+    if (typeof window === 'undefined') return ''
+    let id = localStorage.getItem('tusmo_playerId')
+    if (!id) {
+        id = crypto.randomUUID()
+        localStorage.setItem('tusmo_playerId', id)
+    }
+    return id
+}
+
+function getPlayerName(): string {
+    if (typeof window === 'undefined') return 'Joueur'
+    return localStorage.getItem('tusmo_playerName') || 'Joueur'
+}
+
 function GamePage() {
     const { mode } = useParams({ from: '/game/$mode' })
     const dailyInfo = useQuery(api.games.getDailyInfo)
     const submitGuessMutation = useMutation(api.games.submitGuess)
+    const updateStatsMutation = useMutation(api.stats.updateStats)
+
+    // Player ID for stats
+    const [playerId, setPlayerId] = useState<string>('')
+    const [playerName, setPlayerName] = useState<string>('Joueur')
+
+    useEffect(() => {
+        setPlayerId(getPlayerId())
+        setPlayerName(getPlayerName())
+    }, [])
 
     // For free mode - word length selector
     const [freeLength, setFreeLength] = useState(6)
@@ -172,10 +196,34 @@ function GamePage() {
                         setWon(false)
                     }, 1500)
                 } else {
+                    // Game won - update stats
                     setGameOver(true)
+                    const wordsFound = mode === 'suite' ? (dailyInfo?.suite.totalWords ?? 5) : 1
+                    if (playerId) {
+                        updateStatsMutation({
+                            odI: playerId,
+                            name: playerName,
+                            mode,
+                            won: true,
+                            wordsFound,
+                            date: new Date().toISOString().split('T')[0],
+                        })
+                    }
                 }
             } else if (attempts.length + 1 >= 6) {
+                // Game lost - update stats
                 setGameOver(true)
+                const wordsFound = mode === 'suite' ? suiteIndex : 0 // Partial words found in suite
+                if (playerId) {
+                    updateStatsMutation({
+                        odI: playerId,
+                        name: playerName,
+                        mode,
+                        won: false,
+                        wordsFound,
+                        date: new Date().toISOString().split('T')[0],
+                    })
+                }
             } else {
                 setCurrentGuess(firstLetter)
             }
@@ -186,6 +234,7 @@ function GamePage() {
         currentGuess,
         wordLength,
         submitGuessMutation,
+        updateStatsMutation,
         mode,
         targetWord,
         keyboardState,
@@ -193,6 +242,8 @@ function GamePage() {
         firstLetter,
         suiteIndex,
         dailyInfo,
+        playerId,
+        playerName,
     ])
 
     // Physical keyboard
