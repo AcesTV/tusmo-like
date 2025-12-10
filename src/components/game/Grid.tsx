@@ -25,18 +25,18 @@ export function Tile({
                 'w-12 h-12 md:w-14 md:h-14 flex items-center justify-center',
                 'text-xl md:text-2xl font-bold uppercase rounded-lg border-2',
                 'transition-all duration-200',
-                // Default state
-                status === 'empty' && 'bg-slate-800 border-slate-600',
-                status === 'filled' && 'bg-slate-800 border-slate-400',
+                // Default state - empty cells
+                status === 'empty' && 'bg-slate-800/50 border-slate-600/50 text-slate-600',
+                // Filled state - current typing (much more visible)
+                status === 'filled' && 'bg-slate-700 border-cyan-400 text-white scale-105 shadow-lg shadow-cyan-500/20',
                 // Result states
                 status === 'correct' && 'bg-green-500 border-green-500 text-white',
                 status === 'present' && 'bg-yellow-500 border-yellow-500 text-white',
                 status === 'absent' && 'bg-slate-600 border-slate-600 text-white',
-                // First letter
+                // First letter - given hint
                 isFirstLetter && 'bg-green-500 border-green-500 text-white',
-                // Placeholder
-                isPlaceholder &&
-                'bg-green-500/30 border-green-500/50 text-white/60',
+                // Placeholder - found letters hint (more visible)
+                isPlaceholder && 'bg-green-600/40 border-green-500/60 text-green-300',
                 // Animation
                 animate && 'animate-flip'
             )}

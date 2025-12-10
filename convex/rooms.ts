@@ -1,6 +1,7 @@
 import { query, mutation } from './_generated/server'
 import { v } from 'convex/values'
 import COMMON_WORDS from './data/commonWords'
+import FRENCH_WORDS from './data/words'
 import { evaluateGuess } from './games'
 
 // Generate room code
@@ -214,6 +215,12 @@ export const submitRoomGuess = mutation({
 
         if (upperWord.length !== targetWord.length) {
             return { error: `Le mot doit faire ${targetWord.length} lettres` }
+        }
+
+        // Validate word exists in dictionary
+        const allWords = new Set(FRENCH_WORDS)
+        if (!allWords.has(upperWord)) {
+            return { error: "Ce mot n'existe pas dans le dictionnaire" }
         }
 
         const result = evaluateGuess(upperWord, targetWord)
