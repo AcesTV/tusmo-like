@@ -20,6 +20,67 @@ const players = new Map();
 const dictionary = new Dictionary();
 const dailyChallenge = new DailyChallenge(dictionary);
 
+// Leaderboards (reset daily)
+const leaderboards = {
+    daily: new Map(), // date -> [{pseudo, time, attempts}]
+    suite: new Map(), // date -> [{pseudo, totalTime, wordsFound}]
+    currentDate: null
+};
+
+function resetLeaderboardsIfNeeded() {
+    const today = new Date().toISOString().split('T')[0];
+    if (leaderboards.currentDate !== today) {
+        leaderboards.currentDate = today;
+        leaderboards.daily.set(today, []);
+        leaderboards.suite.set(today, []);
+        console.log(`📊 Leaderboards reset for ${today}`);
+    }
+}
+
+function addToLeaderboard(type, pseudo, data) {
+    resetLeaderboardsIfNeeded();
+    const today = leaderboards.currentDate;
+    const board = leaderboards[type].get(today) || [];
+
+    // Check if player already has an entry (keep best)
+    const existingIndex = board.findIndex(e => e.pseudo === pseudo);
+    if (existingIndex >= 0) {
+        const existing = board[existingIndex];
+        if (data.time < existing.time) {
+            board[existingIndex] = { pseudo, ...data };
+        }
+    } else {
+        board.push({ pseudo, ...data });
+    }
+
+    // Sort by time
+    board.sort((a, b) => a.time - b.time);
+
+    // Keep top 50
+    if (board.length > 50) board.length = 50;
+
+    leaderboards[type].set(today, board);
+}
+
+function getLeaderboard(type) {
+    resetLeaderboardsIfNeeded();
+    const today = leaderboards.currentDate;
+    const board = leaderboards[type].get(today) || [];
+    return board.slice(0, 10).map((entry, i) => ({
+        rank: i + 1,
+        pseudo: entry.pseudo,
+        time: formatTime(entry.time),
+        attempts: entry.attempts
+    }));
+}
+
+function formatTime(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
 // WebSocket connection handler
 wss.on('connection', (ws) => {
     const playerId = uuidv4();
@@ -38,11 +99,16 @@ wss.on('connection', (ws) => {
     });
 
     // Send welcome message
+    resetLeaderboardsIfNeeded();
     ws.send(JSON.stringify({
         type: 'connected',
         playerId,
         dailyWord: dailyChallenge.getDailyWordInfo(),
-        dailySuite: dailyChallenge.getDailySuiteInfo()
+        dailySuite: dailyChallenge.getDailySuiteInfo(),
+        leaderboards: {
+            daily: getLeaderboard('daily'),
+            suite: getLeaderboard('suite')
+        }
     }));
 });
 
@@ -83,6 +149,18 @@ function handleMessage(ws, playerId, message) {
         case 'play_free':
             handlePlayFree(ws, playerId, message.wordLength);
             break;
+
+        case 'restart_room':
+            handleRestartRoom(playerId);
+            break;
+
+        case 'get_leaderboards':
+            ws.send(JSON.stringify({
+                type: 'leaderboards',
+                daily: getLeaderboard('daily'),
+                suite: getLeaderboard('suite')
+            }));
+            break;
     }
 }
 
@@ -93,8 +171,12 @@ function handleSetPseudo(ws, playerId, pseudo) {
         ws,
         roomId: null,
         dailyAttempts: [],
+        dailyStartTime: null,
+        dailyCompleted: false,
         suiteProgress: 0,
         suiteAttempts: [],
+        suiteStartTime: null,
+        suiteTotalTime: 0,
         freeWord: null,
         freeAttempts: []
     });
@@ -129,15 +211,22 @@ function handlePlayDaily(ws, playerId, mode) {
 
     if (mode === 'daily') {
         const wordInfo = dailyChallenge.getDailyWordInfo();
+        if (!player.dailyStartTime && !player.dailyCompleted) {
+            player.dailyStartTime = Date.now();
+        }
         ws.send(JSON.stringify({
             type: 'daily_start',
             mode: 'daily',
             wordLength: wordInfo.length,
             firstLetter: wordInfo.firstLetter,
-            attempts: player.dailyAttempts
+            attempts: player.dailyAttempts,
+            startTime: player.dailyStartTime
         }));
     } else if (mode === 'suite') {
         const suiteInfo = dailyChallenge.getSuiteWordInfo(player.suiteProgress);
+        if (!player.suiteStartTime) {
+            player.suiteStartTime = Date.now();
+        }
         if (suiteInfo) {
             ws.send(JSON.stringify({
                 type: 'daily_start',
@@ -146,7 +235,8 @@ function handlePlayDaily(ws, playerId, mode) {
                 firstLetter: suiteInfo.firstLetter,
                 wordIndex: player.suiteProgress,
                 totalWords: dailyChallenge.suiteWords.length,
-                attempts: player.suiteAttempts
+                attempts: player.suiteAttempts,
+                startTime: player.suiteStartTime
             }));
         }
     }
@@ -215,6 +305,25 @@ function handleGuess(ws, playerId, word, mode) {
         attemptNumber: attempts.length
     }));
 
+    // Handle daily completion - add to leaderboard
+    if (mode === 'daily' && won && !player.dailyCompleted) {
+        player.dailyCompleted = true;
+        const completionTime = Date.now() - player.dailyStartTime;
+        addToLeaderboard('daily', player.pseudo, {
+            time: completionTime,
+            attempts: attempts.length
+        });
+
+        // Send updated leaderboard
+        ws.send(JSON.stringify({
+            type: 'leaderboard_update',
+            mode: 'daily',
+            leaderboard: getLeaderboard('daily'),
+            playerTime: formatTime(completionTime),
+            playerRank: getPlayerRank('daily', player.pseudo)
+        }));
+    }
+
     // Handle suite progression
     if (mode === 'suite' && won) {
         player.suiteProgress++;
@@ -230,12 +339,28 @@ function handleGuess(ws, playerId, word, mode) {
                 firstLetter: nextWord.firstLetter
             }));
         } else {
+            // Suite complete - add to leaderboard
+            const totalTime = Date.now() - player.suiteStartTime;
+            addToLeaderboard('suite', player.pseudo, {
+                time: totalTime,
+                wordsFound: player.suiteProgress
+            });
+
             ws.send(JSON.stringify({
                 type: 'suite_complete',
-                totalWords: dailyChallenge.suiteWords.length
+                totalWords: dailyChallenge.suiteWords.length,
+                totalTime: formatTime(totalTime),
+                leaderboard: getLeaderboard('suite'),
+                playerRank: getPlayerRank('suite', player.pseudo)
             }));
         }
     }
+}
+
+function getPlayerRank(type, pseudo) {
+    const board = leaderboards[type].get(leaderboards.currentDate) || [];
+    const index = board.findIndex(e => e.pseudo === pseudo);
+    return index >= 0 ? index + 1 : null;
 }
 
 function evaluateGuess(guess, target) {
@@ -289,7 +414,8 @@ function handleCreateRoom(ws, playerId, wordLength) {
     ws.send(JSON.stringify({
         type: 'room_created',
         roomCode,
-        wordLength
+        wordLength,
+        seriesCount: room.seriesCount
     }));
 
     broadcastRoomState(room);
@@ -322,7 +448,8 @@ function handleJoinRoom(ws, playerId, roomCode) {
     ws.send(JSON.stringify({
         type: 'room_joined',
         roomCode: room.code,
-        wordLength: room.wordLength
+        wordLength: room.wordLength,
+        seriesCount: room.seriesCount
     }));
 
     broadcastRoomState(room);
@@ -353,19 +480,24 @@ function handleStartGame(playerId) {
     if (!room || room.host !== playerId) return;
 
     room.startGame();
-    broadcastRoomState(room);
 
-    // Send word info to all players
+    // Send game started with first word info to all players
     room.players.forEach(p => {
         const playerData = players.get(p.id);
         if (playerData && playerData.ws) {
+            const currentWord = room.getCurrentWord(p.id);
             playerData.ws.send(JSON.stringify({
                 type: 'game_started',
-                wordLength: room.targetWord.length,
-                firstLetter: room.targetWord[0]
+                wordLength: room.wordLength,
+                firstLetter: currentWord ? currentWord[0] : '',
+                seriesCount: room.seriesCount,
+                wordIndex: 0,
+                startTime: room.startTime
             }));
         }
     });
+
+    broadcastRoomState(room);
 }
 
 function handleRoomGuess(ws, playerId, word) {
@@ -375,7 +507,14 @@ function handleRoomGuess(ws, playerId, word) {
     const room = rooms.get(player.roomId);
     if (!room || room.state !== 'playing') return;
 
+    // Check if player already finished
+    const roomPlayer = room.players.find(p => p.id === playerId);
+    if (roomPlayer && roomPlayer.finished) return;
+
     word = word.toUpperCase();
+    const targetWord = room.getCurrentWord(playerId);
+
+    if (!targetWord) return;
 
     if (!dictionary.isValidWord(word)) {
         ws.send(JSON.stringify({
@@ -385,32 +524,75 @@ function handleRoomGuess(ws, playerId, word) {
         return;
     }
 
-    if (word.length !== room.targetWord.length) {
+    if (word.length !== targetWord.length) {
         ws.send(JSON.stringify({
             type: 'invalid_word',
-            message: `Le mot doit faire ${room.targetWord.length} lettres`
+            message: `Le mot doit faire ${targetWord.length} lettres`
         }));
         return;
     }
 
-    const result = evaluateGuess(word, room.targetWord);
-    const won = word === room.targetWord;
+    const result = evaluateGuess(word, targetWord);
+    const won = word === targetWord;
 
-    room.addGuess(playerId, word, result, won);
+    const progressResult = room.addGuess(playerId, word, result, won);
 
     ws.send(JSON.stringify({
         type: 'guess_result',
         word,
         result,
         won,
-        gameOver: won || room.getPlayerAttempts(playerId) >= 6
+        gameOver: won || room.getPlayerAttempts(playerId) >= 6,
+        correctWord: (!won && room.getPlayerAttempts(playerId) >= 6) ? targetWord : null
     }));
+
+    // Handle series progression
+    if (progressResult.advanceToNext) {
+        // Player advances to next word
+        ws.send(JSON.stringify({
+            type: 'series_next_word',
+            wordIndex: progressResult.nextWordIndex,
+            wordLength: room.wordLength,
+            firstLetter: progressResult.nextWord[0],
+            totalWords: room.seriesCount,
+            failedPrevious: progressResult.failedWord || false
+        }));
+    } else if (progressResult.seriesComplete) {
+        // Player finished all 4 words
+        ws.send(JSON.stringify({
+            type: 'series_complete',
+            totalTime: room.formatTime(progressResult.totalTime),
+            totalTimeMs: progressResult.totalTime
+        }));
+    }
 
     broadcastRoomState(room);
 
-    if (room.isGameOver()) {
-        broadcastGameOver(room);
+    // Check if all players finished
+    if (room.allPlayersFinished()) {
+        broadcastRoomRanking(room);
     }
+}
+
+function handleRestartRoom(playerId) {
+    const player = players.get(playerId);
+    if (!player || !player.roomId) return;
+
+    const room = rooms.get(player.roomId);
+    if (!room || room.host !== playerId) return;
+
+    room.resetForRestart();
+    broadcastRoomState(room);
+
+    // Notify all players
+    room.players.forEach(p => {
+        const playerData = players.get(p.id);
+        if (playerData && playerData.ws) {
+            playerData.ws.send(JSON.stringify({
+                type: 'room_restarted'
+            }));
+        }
+    });
 }
 
 function broadcastRoomState(room) {
@@ -426,15 +608,15 @@ function broadcastRoomState(room) {
     });
 }
 
-function broadcastGameOver(room) {
-    const results = room.getResults();
+function broadcastRoomRanking(room) {
+    const ranking = room.getRanking();
     room.players.forEach(p => {
         const playerData = players.get(p.id);
         if (playerData && playerData.ws) {
             playerData.ws.send(JSON.stringify({
-                type: 'room_game_over',
-                word: room.targetWord,
-                results
+                type: 'room_ranking',
+                ranking,
+                words: room.seriesWords
             }));
         }
     });

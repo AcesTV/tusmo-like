@@ -96,8 +96,15 @@ body {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* ========================================
@@ -275,21 +282,54 @@ body {
     border-color: var(--correct);
 }
 
+.tile.placeholder {
+    background: rgba(34, 197, 94, 0.3);
+    border-color: rgba(34, 197, 94, 0.5);
+    color: rgba(255, 255, 255, 0.6);
+}
+
 @keyframes pop {
-    50% { transform: scale(1.1); }
+    50% {
+        transform: scale(1.1);
+    }
 }
 
 @keyframes flip {
-    0% { transform: rotateX(0); }
-    50% { transform: rotateX(90deg); }
-    100% { transform: rotateX(0); }
+    0% {
+        transform: rotateX(0);
+    }
+
+    50% {
+        transform: rotateX(90deg);
+    }
+
+    100% {
+        transform: rotateX(0);
+    }
 }
 
 @keyframes shake {
-    10%, 90% { transform: translateX(-1px); }
-    20%, 80% { transform: translateX(2px); }
-    30%, 50%, 70% { transform: translateX(-4px); }
-    40%, 60% { transform: translateX(4px); }
+
+    10%,
+    90% {
+        transform: translateX(-1px);
+    }
+
+    20%,
+    80% {
+        transform: translateX(2px);
+    }
+
+    30%,
+    50%,
+    70% {
+        transform: translateX(-4px);
+    }
+
+    40%,
+    60% {
+        transform: translateX(4px);
+    }
 }
 
 .grid-row.shake {
@@ -614,32 +654,208 @@ select {
     .header {
         padding: 1rem;
     }
-    
+
     .logo {
         font-size: 1.4rem;
     }
-    
+
     .main {
         padding: 1rem;
     }
-    
+
     .tile {
         width: 48px;
         height: 48px;
         font-size: 1.4rem;
     }
-    
+
     .keyboard button {
         min-width: 32px;
         height: 48px;
         font-size: 0.9rem;
     }
-    
+
     .keyboard button.key-wide {
         min-width: 56px;
     }
-    
+
     .menu-cards {
         grid-template-columns: 1fr;
     }
+}
+
+/* ========================================
+   Game Timer
+======================================== */
+.game-info {
+    text-align: center;
+}
+
+.game-timer {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent);
+    font-family: 'Inter', monospace;
+    min-width: 60px;
+    text-align: right;
+}
+
+/* ========================================
+   Leaderboards
+======================================== */
+.leaderboard-mini {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.leaderboard-empty {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+.leaderboard-entry {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0;
+    font-size: 0.85rem;
+}
+
+.leaderboard-entry .rank {
+    width: 24px;
+    text-align: center;
+}
+
+.leaderboard-entry .pseudo {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.leaderboard-entry .time {
+    color: var(--accent);
+    font-weight: 600;
+    font-family: monospace;
+}
+
+.leaderboard-entry.is-me {
+    background: rgba(124, 58, 237, 0.2);
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    margin: 0 -0.5rem;
+}
+
+/* ========================================
+   Podium / Ranking
+======================================== */
+.podium {
+    margin: 1rem 0;
+}
+
+.podium-entry {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: var(--bg-card);
+    border-radius: var(--radius-sm);
+    transition: transform 0.2s ease;
+}
+
+.podium-entry.is-me {
+    background: rgba(124, 58, 237, 0.3);
+    border: 1px solid var(--accent);
+}
+
+.podium-entry.top-3 {
+    background: linear-gradient(135deg, var(--bg-card), rgba(124, 58, 237, 0.15));
+}
+
+.podium-entry:first-child {
+    background: linear-gradient(135deg, #ffd700 -100%, var(--bg-card) 50%);
+}
+
+.podium-entry:nth-child(2) {
+    background: linear-gradient(135deg, #c0c0c0 -100%, var(--bg-card) 50%);
+}
+
+.podium-entry:nth-child(3) {
+    background: linear-gradient(135deg, #cd7f32 -100%, var(--bg-card) 50%);
+}
+
+.podium-entry .medal {
+    font-size: 1.5rem;
+    width: 36px;
+    text-align: center;
+}
+
+.podium-entry .name {
+    flex: 1;
+    font-weight: 600;
+}
+
+.podium-entry .time {
+    font-family: monospace;
+    font-size: 1.1rem;
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.result-podium {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.result-podium h3 {
+    margin-bottom: 0.75rem;
+    font-size: 1rem;
+}
+
+/* ========================================
+   Room Info
+======================================== */
+.room-info {
+    text-align: center;
+    padding: 1.5rem;
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    margin-bottom: 1.5rem;
+}
+
+.room-info h3 {
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+}
+
+.room-info p {
+    color: var(--text-secondary);
+}
+
+/* Player Status in Room */
+.player-status {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.player-item.finished {
+    opacity: 0.7;
+}
+
+.player-item.finished .player-status {
+    color: var(--correct);
+}
+
+/* Large Button */
+.btn-large {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    width: 100%;
 }

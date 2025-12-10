@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
     <div class="app">
         <!-- Header -->
@@ -29,7 +31,8 @@
                     <h2>Bienvenue sur TUSMO</h2>
                     <p>Devinez le mot mystère en 6 essais maximum</p>
                     <div class="input-group">
-                        <input type="text" id="pseudoInput" placeholder="Entrez votre pseudo" maxlength="20" autocomplete="off">
+                        <input type="text" id="pseudoInput" placeholder="Entrez votre pseudo" maxlength="20"
+                            autocomplete="off">
                         <button id="startBtn" class="btn btn-primary">Jouer</button>
                     </div>
                 </div>
@@ -43,12 +46,14 @@
                             <div class="card-icon">📅</div>
                             <h3>Mot du Jour</h3>
                             <p id="dailyInfo">Chargement...</p>
+                            <div class="leaderboard-mini" id="dailyLeaderboard"></div>
                             <button class="btn btn-primary">Jouer</button>
                         </div>
                         <div class="menu-card" id="suiteCard">
                             <div class="card-icon">🔥</div>
                             <h3>Suite du Jour</h3>
                             <p id="suiteInfo">5 mots à découvrir</p>
+                            <div class="leaderboard-mini" id="suiteLeaderboard"></div>
                             <button class="btn btn-primary">Jouer</button>
                         </div>
                         <div class="menu-card" id="freeCard">
@@ -70,7 +75,17 @@
                         <div class="menu-card" id="multiCard">
                             <div class="card-icon">👥</div>
                             <h3>Multijoueur</h3>
-                            <p>Affrontez vos amis</p>
+                            <p>Série de 4 mots</p>
+                            <div class="length-selector">
+                                <label>Lettres:</label>
+                                <select id="roomLengthSelect">
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                    <option value="6" selected>6</option>
+                                    <option value="7">7</option>
+                                    <option value="8">8</option>
+                                </select>
+                            </div>
                             <button class="btn btn-secondary" id="createRoomBtn">Créer</button>
                             <button class="btn btn-secondary" id="joinRoomBtn">Rejoindre</button>
                         </div>
@@ -83,14 +98,17 @@
                 <div class="game-container">
                     <div class="game-header">
                         <button id="backBtn" class="btn btn-ghost">← Retour</button>
-                        <div class="game-mode" id="gameModeLabel">Mot du Jour</div>
-                        <div class="game-progress" id="gameProgress"></div>
+                        <div class="game-info">
+                            <div class="game-mode" id="gameModeLabel">Mot du Jour</div>
+                            <div class="game-progress" id="gameProgress"></div>
+                        </div>
+                        <div class="game-timer" id="gameTimer">0:00</div>
                     </div>
-                    
+
                     <div class="grid-container">
                         <div id="gameGrid" class="game-grid"></div>
                     </div>
-                    
+
                     <div id="keyboard" class="keyboard">
                         <div class="keyboard-row">
                             <button data-key="A">A</button>
@@ -137,21 +155,21 @@
                         <button id="leaveRoomBtn" class="btn btn-ghost">← Quitter</button>
                         <div class="room-code">Code: <span id="roomCodeDisplay">------</span></div>
                     </div>
-                    
+
                     <div class="room-content">
-                        <div class="players-list" id="playersList"></div>
-                        
-                        <div class="room-settings" id="roomSettings">
-                            <label>Lettres:</label>
-                            <select id="roomLengthSelect">
-                                <option value="4">4</option>
-                                <option value="5">5</option>
-                                <option value="6" selected>6</option>
-                                <option value="7">7</option>
-                                <option value="8">8</option>
-                            </select>
-                            <button id="startRoomGameBtn" class="btn btn-primary">Lancer la partie</button>
+                        <div class="room-info">
+                            <h3>🎮 Série de 4 mots</h3>
+                            <p>Le plus rapide gagne!</p>
                         </div>
+
+                        <div class="players-list" id="playersList"></div>
+
+                        <div class="room-settings" id="roomSettings">
+                            <button id="startRoomGameBtn" class="btn btn-primary btn-large">Lancer la partie</button>
+                        </div>
+
+                        <button id="restartRoomBtn" class="btn btn-primary btn-large"
+                            style="display: none;">Recommencer</button>
                     </div>
                 </div>
             </section>
@@ -163,6 +181,7 @@
                 <h2 id="resultTitle">Bravo !</h2>
                 <p id="resultMessage"></p>
                 <div id="resultWord" class="result-word"></div>
+                <div id="resultPodium" class="result-podium" style="display: none;"></div>
                 <div class="modal-actions">
                     <button id="playAgainBtn" class="btn btn-primary">Rejouer</button>
                     <button id="menuBtn" class="btn btn-secondary">Menu</button>
@@ -201,6 +220,10 @@
                             <span>Lettre absente du mot</span>
                         </div>
                     </div>
+                    <hr>
+                    <h3>Mode Multijoueur</h3>
+                    <p>Trouvez les <strong>4 mots</strong> le plus vite possible!</p>
+                    <p>Le joueur le plus rapide gagne. 🏆</p>
                 </div>
                 <button id="closeHelpBtn" class="btn btn-primary">Compris !</button>
             </div>
@@ -212,4 +235,5 @@
 
     <script src="js/main.js"></script>
 </body>
+
 </html>

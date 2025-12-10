@@ -20,6 +20,20 @@ class TusmoGame {
         this.suiteProgress = 0;
         this.totalSuiteWords = 5;
 
+        // Series mode (multiplayer)
+        this.seriesProgress = 0;
+        this.totalSeriesWords = 4;
+
+        // Timer
+        this.startTime = null;
+        this.timerInterval = null;
+
+        // Leaderboards
+        this.leaderboards = { daily: [], suite: [] };
+
+        // Track found letters (correct positions)
+        this.foundLetters = [];
+
         this.init();
     }
 
@@ -54,8 +68,12 @@ class TusmoGame {
             backBtn: document.getElementById('backBtn'),
             gameModeLabel: document.getElementById('gameModeLabel'),
             gameProgress: document.getElementById('gameProgress'),
+            gameTimer: document.getElementById('gameTimer'),
             dailyInfo: document.getElementById('dailyInfo'),
             suiteInfo: document.getElementById('suiteInfo'),
+            // Leaderboards
+            dailyLeaderboard: document.getElementById('dailyLeaderboard'),
+            suiteLeaderboard: document.getElementById('suiteLeaderboard'),
             // Room
             roomCodeDisplay: document.getElementById('roomCodeDisplay'),
             playersList: document.getElementById('playersList'),
@@ -63,11 +81,13 @@ class TusmoGame {
             roomLengthSelect: document.getElementById('roomLengthSelect'),
             startRoomGameBtn: document.getElementById('startRoomGameBtn'),
             leaveRoomBtn: document.getElementById('leaveRoomBtn'),
+            restartRoomBtn: document.getElementById('restartRoomBtn'),
             // Modals
             resultModal: document.getElementById('resultModal'),
             resultTitle: document.getElementById('resultTitle'),
             resultMessage: document.getElementById('resultMessage'),
             resultWord: document.getElementById('resultWord'),
+            resultPodium: document.getElementById('resultPodium'),
             playAgainBtn: document.getElementById('playAgainBtn'),
             menuBtn: document.getElementById('menuBtn'),
             joinModal: document.getElementById('joinModal'),
@@ -101,6 +121,9 @@ class TusmoGame {
         // Room
         this.elements.leaveRoomBtn.addEventListener('click', () => this.leaveRoom());
         this.elements.startRoomGameBtn.addEventListener('click', () => this.startRoomGame());
+        if (this.elements.restartRoomBtn) {
+            this.elements.restartRoomBtn.addEventListener('click', () => this.restartRoom());
+        }
 
         // Keyboard
         this.elements.keyboard.addEventListener('click', (e) => {
@@ -160,6 +183,10 @@ class TusmoGame {
                 if (data.dailyWord) {
                     this.elements.dailyInfo.textContent = `${data.dailyWord.length} lettres`;
                 }
+                if (data.leaderboards) {
+                    this.leaderboards = data.leaderboards;
+                    this.updateLeaderboardsDisplay();
+                }
                 break;
 
             case 'pseudo_set':
@@ -172,11 +199,13 @@ class TusmoGame {
                 this.wordLength = data.wordLength;
                 this.firstLetter = data.firstLetter;
                 this.currentMode = data.mode;
+                this.startTime = data.startTime || Date.now();
                 if (data.mode === 'suite') {
                     this.suiteProgress = data.wordIndex;
                     this.totalSuiteWords = data.totalWords;
                 }
                 this.initGame();
+                this.startTimer();
                 break;
 
             case 'guess_result':
@@ -196,14 +225,33 @@ class TusmoGame {
                 break;
 
             case 'suite_complete':
+                this.stopTimer();
                 this.elements.resultTitle.textContent = '🔥 Suite Complète!';
-                this.elements.resultMessage.textContent = `Vous avez trouvé les ${data.totalWords} mots!`;
+                this.elements.resultMessage.textContent = `Temps: ${data.totalTime}`;
+                if (data.playerRank) {
+                    this.elements.resultMessage.textContent += ` • Rang #${data.playerRank}`;
+                }
+                this.showLeaderboardInModal(data.leaderboard);
                 this.openModal(this.elements.resultModal);
+                break;
+
+            case 'leaderboard_update':
+                this.leaderboards[data.mode] = data.leaderboard;
+                this.updateLeaderboardsDisplay();
+                if (data.playerTime) {
+                    this.showToast(`Temps: ${data.playerTime} • Rang #${data.playerRank}`);
+                }
+                break;
+
+            case 'leaderboards':
+                this.leaderboards = { daily: data.daily, suite: data.suite };
+                this.updateLeaderboardsDisplay();
                 break;
 
             case 'room_created':
                 this.roomCode = data.roomCode;
                 this.wordLength = data.wordLength;
+                this.totalSeriesWords = data.seriesCount || 4;
                 this.isHost = true;
                 this.showScreen('room');
                 this.elements.roomCodeDisplay.textContent = data.roomCode;
@@ -212,6 +260,7 @@ class TusmoGame {
             case 'room_joined':
                 this.roomCode = data.roomCode;
                 this.wordLength = data.wordLength;
+                this.totalSeriesWords = data.seriesCount || 4;
                 this.closeModal(this.elements.joinModal);
                 this.showScreen('room');
                 this.elements.roomCodeDisplay.textContent = data.roomCode;
@@ -225,11 +274,43 @@ class TusmoGame {
                 this.wordLength = data.wordLength;
                 this.firstLetter = data.firstLetter;
                 this.currentMode = 'room';
+                this.seriesProgress = 0;
+                this.totalSeriesWords = data.seriesCount || 4;
+                this.startTime = data.startTime || Date.now();
                 this.initGame();
+                this.startTimer();
                 break;
 
-            case 'room_game_over':
-                this.showRoomResults(data);
+            case 'series_next_word':
+                this.seriesProgress = data.wordIndex;
+                this.wordLength = data.wordLength;
+                this.firstLetter = data.firstLetter;
+                if (data.failedPrevious) {
+                    this.showToast('Mot raté, passage au suivant...', true);
+                }
+                setTimeout(() => {
+                    this.currentRow = 0;
+                    this.currentTile = 1;
+                    this.gameOver = false;
+                    this.createGrid();
+                    this.updateGameProgress();
+                }, 1500);
+                break;
+
+            case 'series_complete':
+                this.stopTimer();
+                this.gameOver = true;
+                this.showToast(`Série terminée! Temps: ${data.totalTime}`);
+                break;
+
+            case 'room_ranking':
+                this.stopTimer();
+                this.showRoomRanking(data);
+                break;
+
+            case 'room_restarted':
+                this.showScreen('room');
+                this.showToast('Nouvelle partie prête!');
                 break;
 
             case 'error':
@@ -242,6 +323,73 @@ class TusmoGame {
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             this.ws.send(JSON.stringify(data));
         }
+    }
+
+    // Timer functions
+    startTimer() {
+        this.stopTimer();
+        this.updateTimerDisplay();
+        this.timerInterval = setInterval(() => this.updateTimerDisplay(), 1000);
+    }
+
+    stopTimer() {
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+        }
+    }
+
+    updateTimerDisplay() {
+        if (!this.elements.gameTimer) return;
+        const elapsed = Date.now() - this.startTime;
+        const minutes = Math.floor(elapsed / 60000);
+        const seconds = Math.floor((elapsed % 60000) / 1000);
+        this.elements.gameTimer.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    formatTime(ms) {
+        const minutes = Math.floor(ms / 60000);
+        const seconds = Math.floor((ms % 60000) / 1000);
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    // Leaderboard functions
+    updateLeaderboardsDisplay() {
+        if (this.elements.dailyLeaderboard) {
+            this.elements.dailyLeaderboard.innerHTML = this.renderLeaderboard(this.leaderboards.daily);
+        }
+        if (this.elements.suiteLeaderboard) {
+            this.elements.suiteLeaderboard.innerHTML = this.renderLeaderboard(this.leaderboards.suite);
+        }
+    }
+
+    renderLeaderboard(entries) {
+        if (!entries || entries.length === 0) {
+            return '<div class="leaderboard-empty">Aucun score</div>';
+        }
+        return entries.map((e, i) => `
+            <div class="leaderboard-entry ${e.pseudo === this.pseudo ? 'is-me' : ''}">
+                <span class="rank">${this.getRankEmoji(e.rank)}</span>
+                <span class="pseudo">${e.pseudo}</span>
+                <span class="time">${e.time}</span>
+            </div>
+        `).join('');
+    }
+
+    getRankEmoji(rank) {
+        if (rank === 1) return '🥇';
+        if (rank === 2) return '🥈';
+        if (rank === 3) return '🥉';
+        return `#${rank}`;
+    }
+
+    showLeaderboardInModal(leaderboard) {
+        if (!this.elements.resultPodium) return;
+        this.elements.resultPodium.innerHTML = `
+            <h3>🏆 Classement</h3>
+            ${this.renderLeaderboard(leaderboard)}
+        `;
+        this.elements.resultPodium.style.display = 'block';
     }
 
     login() {
@@ -265,7 +413,6 @@ class TusmoGame {
     startFree() {
         this.wordLength = parseInt(this.elements.freeLengthSelect.value);
         this.currentMode = 'free';
-        // For free mode, we request a random word
         this.send({ type: 'play_free', wordLength: this.wordLength });
     }
 
@@ -293,6 +440,7 @@ class TusmoGame {
         this.send({ type: 'leave_room' });
         this.roomCode = null;
         this.isHost = false;
+        this.stopTimer();
         this.showScreen('menu');
     }
 
@@ -300,14 +448,34 @@ class TusmoGame {
         this.send({ type: 'start_game' });
     }
 
+    restartRoom() {
+        this.send({ type: 'restart_room' });
+    }
+
     updateRoomState(data) {
         this.isHost = data.host === this.playerId;
-        this.elements.roomSettings.style.display = this.isHost ? 'flex' : 'none';
 
+        // Show/hide host controls
+        if (this.elements.roomSettings) {
+            this.elements.roomSettings.style.display = this.isHost && data.state === 'waiting' ? 'flex' : 'none';
+        }
+        if (this.elements.restartRoomBtn) {
+            this.elements.restartRoomBtn.style.display = this.isHost && data.state === 'finished' ? 'block' : 'none';
+        }
+
+        // Update players list with progress
         this.elements.playersList.innerHTML = data.players.map(p => `
-            <div class="player-item">
-                <span>${p.pseudo}${p.id === data.host ? '<span class="host-badge">Hôte</span>' : ''}</span>
-                <span>${p.score > 0 ? p.score + ' pts' : (p.finished ? '❌' : '⏳')}</span>
+            <div class="player-item ${p.finished ? 'finished' : ''}">
+                <span>
+                    ${p.pseudo}
+                    ${p.id === data.host ? '<span class="host-badge">Hôte</span>' : ''}
+                </span>
+                <span class="player-status">
+                    ${data.state === 'playing' ?
+                (p.finished ? `✅ ${p.formattedTime}` : `Mot ${p.wordIndex + 1}/${data.seriesCount}`) :
+                (p.finished ? `${p.formattedTime}` : '⏳')
+            }
+                </span>
             </div>
         `).join('');
     }
@@ -317,16 +485,12 @@ class TusmoGame {
         this.currentTile = 1;
         this.gameOver = false;
         this.keyboardState = {};
+        this.foundLetters = new Array(this.wordLength).fill(null);
+        this.foundLetters[0] = this.firstLetter; // First letter is always known
 
         // Update UI
-        const modeLabels = {
-            daily: 'Mot du Jour',
-            suite: `Suite du Jour (${this.suiteProgress + 1}/${this.totalSuiteWords})`,
-            free: 'Partie Libre',
-            room: `Salle ${this.roomCode}`
-        };
-        this.elements.gameModeLabel.textContent = modeLabels[this.currentMode] || 'Jeu';
-        this.elements.gameProgress.textContent = '';
+        this.updateGameModeLabel();
+        this.updateGameProgress();
 
         // Create grid
         this.createGrid();
@@ -337,6 +501,26 @@ class TusmoGame {
         });
 
         this.showScreen('game');
+    }
+
+    updateGameModeLabel() {
+        const modeLabels = {
+            daily: 'Mot du Jour',
+            suite: `Suite du Jour`,
+            free: 'Partie Libre',
+            room: `Série Multijoueur`
+        };
+        this.elements.gameModeLabel.textContent = modeLabels[this.currentMode] || 'Jeu';
+    }
+
+    updateGameProgress() {
+        if (this.currentMode === 'suite') {
+            this.elements.gameProgress.textContent = `Mot ${this.suiteProgress + 1}/${this.totalSuiteWords}`;
+        } else if (this.currentMode === 'room') {
+            this.elements.gameProgress.textContent = `Mot ${this.seriesProgress + 1}/${this.totalSeriesWords}`;
+        } else {
+            this.elements.gameProgress.textContent = '';
+        }
     }
 
     createGrid() {
@@ -382,6 +566,7 @@ class TusmoGame {
         const tile = row.children[this.currentTile];
         tile.textContent = letter;
         tile.classList.add('filled');
+        tile.classList.remove('placeholder'); // Remove placeholder style if was a hint
         this.currentTile++;
     }
 
@@ -391,8 +576,16 @@ class TusmoGame {
         this.currentTile--;
         const row = this.elements.gameGrid.children[this.currentRow];
         const tile = row.children[this.currentTile];
-        tile.textContent = '';
-        tile.classList.remove('filled');
+
+        // If this was a placeholder, restore it
+        if (this.foundLetters[this.currentTile]) {
+            tile.textContent = this.foundLetters[this.currentTile];
+            tile.classList.remove('filled');
+            tile.classList.add('placeholder');
+        } else {
+            tile.textContent = '';
+            tile.classList.remove('filled');
+        }
     }
 
     submitGuess() {
@@ -433,29 +626,49 @@ class TusmoGame {
         // Move to next row or end game
         setTimeout(() => {
             if (won) {
-                this.gameOver = true;
-                this.elements.resultTitle.textContent = '🎉 Bravo!';
-                this.elements.resultMessage.textContent = `Trouvé en ${this.currentRow + 1} essai${this.currentRow > 0 ? 's' : ''}!`;
-                this.showWordResult(word, result);
-
-                if (this.currentMode !== 'suite') {
+                if (this.currentMode !== 'suite' && this.currentMode !== 'room') {
+                    this.stopTimer();
+                    this.gameOver = true;
+                    this.elements.resultTitle.textContent = '🎉 Bravo!';
+                    this.elements.resultMessage.textContent = `Trouvé en ${this.currentRow + 1} essai${this.currentRow > 0 ? 's' : ''}!`;
+                    this.showWordResult(word, result);
+                    if (this.elements.resultPodium) this.elements.resultPodium.style.display = 'none';
                     this.openModal(this.elements.resultModal);
                 }
             } else if (gameOver) {
-                this.gameOver = true;
-                this.elements.resultTitle.textContent = '😔 Perdu';
-                this.elements.resultMessage.textContent = `Le mot était:`;
-                this.showWordResult(correctWord, correctWord.split('').map(() => 'correct'));
-                this.openModal(this.elements.resultModal);
+                if (this.currentMode !== 'room') {
+                    this.stopTimer();
+                    this.gameOver = true;
+                    this.elements.resultTitle.textContent = '😔 Perdu';
+                    this.elements.resultMessage.textContent = `Le mot était:`;
+                    this.showWordResult(correctWord, correctWord.split('').map(() => 'correct'));
+                    if (this.elements.resultPodium) this.elements.resultPodium.style.display = 'none';
+                    this.openModal(this.elements.resultModal);
+                }
             } else {
+                // Update found letters based on result
+                result.forEach((status, i) => {
+                    if (status === 'correct') {
+                        this.foundLetters[i] = word[i];
+                    }
+                });
+
                 this.currentRow++;
                 this.currentTile = 1;
 
-                // Set first letter for new row
+                // Set found letters as placeholders for new row
                 const nextRow = this.elements.gameGrid.children[this.currentRow];
                 if (nextRow) {
-                    nextRow.children[0].textContent = this.firstLetter;
-                    nextRow.children[0].classList.add('first-letter');
+                    for (let i = 0; i < this.wordLength; i++) {
+                        if (this.foundLetters[i]) {
+                            nextRow.children[i].textContent = this.foundLetters[i];
+                            if (i === 0) {
+                                nextRow.children[i].classList.add('first-letter');
+                            } else {
+                                nextRow.children[i].classList.add('placeholder');
+                            }
+                        }
+                    }
                 }
             }
         }, result.length * 200 + 300);
@@ -488,11 +701,37 @@ class TusmoGame {
         setTimeout(() => row.classList.remove('shake'), 500);
     }
 
-    showRoomResults(data) {
-        const winner = data.results[0];
-        this.elements.resultTitle.textContent = winner.won ? `🏆 ${winner.pseudo} gagne!` : '❌ Personne n\'a trouvé';
-        this.elements.resultMessage.textContent = `Le mot était:`;
-        this.showWordResult(data.word, data.word.split('').map(() => 'correct'));
+    showRoomRanking(data) {
+        const ranking = data.ranking;
+        this.elements.resultTitle.textContent = '🏆 Classement Final';
+
+        // Create podium
+        let podiumHtml = '<div class="podium">';
+        ranking.forEach((player, i) => {
+            const medal = this.getRankEmoji(i + 1);
+            const isMe = player.pseudo === this.pseudo;
+            podiumHtml += `
+                <div class="podium-entry ${isMe ? 'is-me' : ''} ${i < 3 ? 'top-3' : ''}">
+                    <span class="medal">${medal}</span>
+                    <span class="name">${player.pseudo}</span>
+                    <span class="time">${player.formattedTime}</span>
+                </div>
+            `;
+        });
+        podiumHtml += '</div>';
+
+        this.elements.resultMessage.innerHTML = podiumHtml;
+        this.elements.resultWord.innerHTML = `<small>Mots: ${data.words.join(', ')}</small>`;
+        if (this.elements.resultPodium) this.elements.resultPodium.style.display = 'none';
+
+        // Show restart button for host
+        if (this.isHost) {
+            this.elements.playAgainBtn.textContent = 'Recommencer';
+            this.elements.playAgainBtn.style.display = 'block';
+        } else {
+            this.elements.playAgainBtn.style.display = 'none';
+        }
+
         this.openModal(this.elements.resultModal);
     }
 
@@ -507,15 +746,21 @@ class TusmoGame {
         } else if (this.currentMode === 'free') {
             this.startFree();
         } else if (this.currentMode === 'room') {
+            if (this.isHost) {
+                this.restartRoom();
+            }
             this.showScreen('room');
         }
     }
 
     backToMenu() {
+        this.stopTimer();
         if (this.roomCode) {
             this.leaveRoom();
         }
         this.showScreen('menu');
+        // Refresh leaderboards
+        this.send({ type: 'get_leaderboards' });
     }
 
     showScreen(name) {
