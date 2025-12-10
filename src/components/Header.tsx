@@ -1,12 +1,14 @@
 'use client'
 
 import { Link } from '@tanstack/react-router'
-import { useConvexAuth } from 'convex/react'
+import { useConvexAuth, useQuery } from 'convex/react'
+import { api } from '../../convex/_generated/api'
 import { SignOutButton } from './auth/AuthButtons'
 import { User, LogIn } from 'lucide-react'
 
 export default function Header() {
   const { isAuthenticated, isLoading } = useConvexAuth()
+  const currentUser = useQuery(api.users.getCurrentUser)
 
   return (
     <header className="p-4 flex items-center justify-between bg-slate-800 text-white shadow-lg">
@@ -24,7 +26,9 @@ export default function Header() {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-700 rounded-full">
               <User className="w-4 h-4 text-green-400" />
-              <span className="text-sm text-gray-300">Connecté</span>
+              <span className="text-sm text-white font-medium">
+                {currentUser?.username || currentUser?.name || 'Joueur'}
+              </span>
             </div>
             <SignOutButton />
           </div>
@@ -41,3 +45,4 @@ export default function Header() {
     </header>
   )
 }
+
