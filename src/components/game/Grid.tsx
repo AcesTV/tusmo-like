@@ -82,7 +82,12 @@ export function Grid({
                 // Current row
                 if (col < currentGuess.length) {
                     letter = currentGuess[col]
-                    status = 'filled'
+                    // Check if this letter matches a confirmed position (foundLetter)
+                    if (foundLetters[col] && currentGuess[col].toUpperCase() === foundLetters[col]!.toUpperCase()) {
+                        isFirstLetter = true // Use green styling for correct position
+                    } else {
+                        status = 'filled'
+                    }
                 } else if (col === 0) {
                     letter = firstLetter
                     isFirstLetter = true
@@ -91,11 +96,7 @@ export function Grid({
                     isPlaceholder = true
                 }
             } else {
-                // Future row - show first letter only on first column
-                if (col === 0) {
-                    letter = firstLetter
-                    isFirstLetter = true
-                }
+                // Future row - keep empty, don't show first letter
             }
 
             tiles.push(
