@@ -304,7 +304,94 @@ function RoomPage() {
     )
   }
 
-  // PLAYING STATE
+  // PLAYING STATE - Player finished, waiting for others
+  if (roomState.state === 'playing' && myPlayer?.finished && ranking) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 flex flex-col">
+        <header className="p-4 flex items-center justify-between border-b border-slate-700">
+          <div className="flex items-center gap-2">
+            <Trophy className="w-6 h-6 text-yellow-400" />
+            <span className="text-xl font-bold text-white">Classement en cours</span>
+          </div>
+          <Timer startTime={roomState.startTime} running={false} />
+        </header>
+
+        <main className="flex-1 flex flex-col items-center justify-center p-6">
+          {/* Success message */}
+          <div className="text-center mb-8">
+            <div className="text-5xl mb-4">🎉</div>
+            <h2 className="text-2xl font-bold text-white mb-2">Série terminée !</h2>
+            <p className="text-gray-400">En attente des autres joueurs...</p>
+          </div>
+
+          {/* Current ranking */}
+          <div className="w-full max-w-md mb-8">
+            <div className="space-y-3">
+              {ranking.ranking.map((player, index) => (
+                <div
+                  key={player.odI}
+                  className={`flex items-center gap-4 p-4 rounded-xl ${
+                    player.finished
+                      ? index === 0
+                        ? 'bg-yellow-500/20 border border-yellow-500/50'
+                        : index === 1
+                          ? 'bg-gray-400/20 border border-gray-400/50'
+                          : index === 2
+                            ? 'bg-amber-600/20 border border-amber-600/50'
+                            : 'bg-green-500/20 border border-green-500/50'
+                      : 'bg-slate-700/50 opacity-60'
+                  }`}
+                >
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg ${
+                      player.finished
+                        ? index === 0
+                          ? 'bg-yellow-500 text-black'
+                          : index === 1
+                            ? 'bg-gray-400 text-black'
+                            : index === 2
+                              ? 'bg-amber-600 text-white'
+                              : 'bg-green-500 text-white'
+                        : 'bg-slate-600 text-white'
+                    }`}
+                  >
+                    {player.finished ? index + 1 : '?'}
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-semibold text-white">{player.name}</div>
+                    <div className="text-sm text-gray-400">
+                      {player.finished ? player.formattedTime : 'En cours...'}
+                    </div>
+                  </div>
+                  {player.odI === playerId && (
+                    <span className="text-xs text-pink-400">(vous)</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Players progress */}
+          <div className="flex justify-center gap-4 flex-wrap">
+            {roomState.players.map((player) => (
+              <div
+                key={player.odI}
+                className={`px-3 py-1 rounded-full text-sm ${
+                  player.finished
+                    ? 'bg-green-500/20 text-green-400'
+                    : 'bg-slate-700 text-gray-400'
+                }`}
+              >
+                {player.name} {player.finished ? '✓' : `(${player.wordIndex + 1}/${roomState.seriesCount})`}
+              </div>
+            ))}
+          </div>
+        </main>
+      </div>
+    )
+  }
+
+  // PLAYING STATE - Player still playing
   if (roomState.state === 'playing' && currentWord) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 flex flex-col">
@@ -325,28 +412,18 @@ function RoomPage() {
         )}
 
         <main className="flex-1 flex flex-col items-center justify-center gap-8 p-4">
-          {myPlayer?.finished ? (
-            <div className="text-center">
-              <div className="text-4xl mb-4">✅</div>
-              <h2 className="text-2xl font-bold text-white mb-2">Terminé !</h2>
-              <p className="text-gray-400">En attente des autres joueurs...</p>
-            </div>
-          ) : (
-            <>
-              <Grid
-                attempts={attempts}
-                currentGuess={currentGuess}
-                wordLength={currentWord.word.length}
-                firstLetter={currentWord.firstLetter}
-                foundLetters={foundLetters}
-              />
-              <Keyboard
-                onKey={(key) => (key === 'ENTER' ? submitGuess() : handleKey(key))}
-                keyboardState={keyboardState}
-                disabled={false}
-              />
-            </>
-          )}
+          <Grid
+            attempts={attempts}
+            currentGuess={currentGuess}
+            wordLength={currentWord.word.length}
+            firstLetter={currentWord.firstLetter}
+            foundLetters={foundLetters}
+          />
+          <Keyboard
+            onKey={(key) => (key === 'ENTER' ? submitGuess() : handleKey(key))}
+            keyboardState={keyboardState}
+            disabled={false}
+          />
         </main>
 
         {/* Players status */}
