@@ -2,18 +2,19 @@
 
 import { createFileRoute, Link, useParams } from '@tanstack/react-router'
 import { useQuery, useMutation } from 'convex/react'
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { api } from '../../../convex/_generated/api'
 import { Grid, type TileStatus } from '@/components/game/Grid'
 import { Keyboard } from '@/components/game/Keyboard'
 import { Timer } from '@/components/game/Timer'
-import { ArrowLeft, RotateCcw } from 'lucide-react'
+import { ArrowLeft, RotateCcw, Clock, Target } from 'lucide-react'
 
 export const Route = createFileRoute('/game/$mode')({
     component: GamePage,
 })
 
-function getPlayerId(): string {
+// Get or create a guest/player ID for tracking
+function getGuestId(): string {
     if (typeof window === 'undefined') return ''
     let id = localStorage.getItem('tusmo_playerId')
     if (!id) {
@@ -32,14 +33,29 @@ function GamePage() {
     const { mode } = useParams({ from: '/game/$mode' })
     const dailyInfo = useQuery(api.games.getDailyInfo)
     const submitGuessMutation = useMutation(api.games.submitGuess)
-    const updateStatsMutation = useMutation(api.stats.updateStats)
+    const saveDailyCompletionMutation = useMutation(api.games.saveDailyCompletion)
 
-    // Player ID for stats
+    // Guest ID for tracking
+    const [guestId, setGuestId] = useState('')
+    const completionSaved = useRef(false)
+
+    // Stats tracking
+    const updateStatsMutation = useMutation(api.stats.updateStats)
     const [playerId, setPlayerId] = useState<string>('')
     const [playerName, setPlayerName] = useState<string>('Joueur')
 
+    // Check if already completed today (for daily/suite modes)
+    const dailyCompletion = useQuery(
+        api.games.getDailyCompletion,
+        mode === 'daily' || mode === 'suite'
+            ? { mode, guestId: guestId || 'loading' }
+            : 'skip'
+    )
+
     useEffect(() => {
-        setPlayerId(getPlayerId())
+        const id = getGuestId()
+        setGuestId(id)
+        setPlayerId(id)
         setPlayerName(getPlayerName())
     }, [])
 
@@ -268,10 +284,90 @@ function GamePage() {
         }
     }
 
+    // Save completion when game ends (for daily/suite)
+    useEffect(() => {
+        if (gameOver && (mode === 'daily' || mode === 'suite') && guestId && startTime && !completionSaved.current) {
+            completionSaved.current = true
+            const time = Date.now() - startTime
+            saveDailyCompletionMutation({
+                mode,
+                guestId,
+                won,
+                time,
+                attempts: attempts.map(a => ({ word: a.word, result: a.result })),
+            })
+        }
+    }, [gameOver, mode, guestId, startTime, won, attempts, saveDailyCompletionMutation])
+
     const modeLabels: Record<string, string> = {
         daily: 'Mot du Jour',
         suite: 'Suite du Jour',
         free: 'Partie Libre',
+    }
+
+    const formatTime = (ms: number) => {
+        const totalSeconds = Math.floor(ms / 1000)
+        const minutes = Math.floor(totalSeconds / 60)
+        const seconds = totalSeconds % 60
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`
+    }
+
+    // Show "already completed" screen for daily/suite modes
+    if ((mode === 'daily' || mode === 'suite') && dailyCompletion?.completed) {
+        return (
+            <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 flex flex-col">
+                <header className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
+                    <Link to="/" className="flex items-center gap-2 text-gray-400 hover:text-white">
+                        <ArrowLeft className="w-5 h-5" />
+                        <span>Retour</span>
+                    </Link>
+                    <div className="text-center">
+                        <div className="text-sm text-gray-400">{modeLabels[mode]}</div>
+                    </div>
+                    <div className="w-20" />
+                </header>
+
+                <main className="flex-1 flex flex-col items-center justify-center gap-6 p-4">
+                    <div className="bg-slate-800 rounded-2xl p-8 max-w-sm w-full mx-4 text-center">
+                        <div className="text-6xl mb-4">{dailyCompletion.won ? '🏆' : '✅'}</div>
+                        <h2 className="text-2xl font-bold text-white mb-2">
+                            {dailyCompletion.won ? 'Félicitations !' : 'Défi terminé'}
+                        </h2>
+                        <p className="text-gray-400 mb-6">
+                            Vous avez déjà joué le {modeLabels[mode].toLowerCase()} aujourd'hui.
+                        </p>
+
+                        <div className="flex justify-center gap-6 mb-6">
+                            <div className="text-center">
+                                <div className="flex items-center justify-center gap-2 text-cyan-400 mb-1">
+                                    <Clock className="w-5 h-5" />
+                                    <span className="font-mono text-xl">{formatTime(dailyCompletion.time || 0)}</span>
+                                </div>
+                                <div className="text-xs text-gray-500">Temps</div>
+                            </div>
+                            <div className="text-center">
+                                <div className="flex items-center justify-center gap-2 text-orange-400 mb-1">
+                                    <Target className="w-5 h-5" />
+                                    <span className="font-mono text-xl">{dailyCompletion.attempts}</span>
+                                </div>
+                                <div className="text-xs text-gray-500">Essais</div>
+                            </div>
+                        </div>
+
+                        <p className="text-sm text-gray-500 mb-6">
+                            Revenez demain pour un nouveau défi !
+                        </p>
+
+                        <Link
+                            to="/"
+                            className="inline-block px-6 py-3 bg-violet-500 hover:bg-violet-600 text-white rounded-lg font-semibold transition-colors"
+                        >
+                            Retour au menu
+                        </Link>
+                    </div>
+                </main>
+            </div>
+        )
     }
 
     if (loading) {

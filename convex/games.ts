@@ -183,3 +183,77 @@ export const submitGuess = mutation({
         }
     },
 })
+
+// Check if player has already completed a daily challenge today
+export const getDailyCompletion = query({
+    args: {
+        mode: v.string(),
+        guestId: v.string(),
+    },
+    handler: async (ctx, { mode, guestId }) => {
+        const today = new Date().toISOString().split('T')[0]
+
+        // Check by guestId
+        const attempt = await ctx.db
+            .query('gameAttempts')
+            .withIndex('by_guest_date_mode', (q) =>
+                q.eq('guestId', guestId).eq('date', today).eq('mode', mode)
+            )
+            .first()
+
+        if (attempt && attempt.completed) {
+            return {
+                completed: true,
+                won: attempt.won,
+                time: attempt.time,
+                attempts: attempt.attempts.length,
+            }
+        }
+
+        return null
+    },
+})
+
+// Save daily completion
+export const saveDailyCompletion = mutation({
+    args: {
+        mode: v.string(),
+        guestId: v.string(),
+        won: v.boolean(),
+        time: v.number(),
+        attempts: v.array(
+            v.object({
+                word: v.string(),
+                result: v.array(v.string()),
+            })
+        ),
+    },
+    handler: async (ctx, { mode, guestId, won, time, attempts }) => {
+        const today = new Date().toISOString().split('T')[0]
+
+        // Check if already exists
+        const existing = await ctx.db
+            .query('gameAttempts')
+            .withIndex('by_guest_date_mode', (q) =>
+                q.eq('guestId', guestId).eq('date', today).eq('mode', mode)
+            )
+            .first()
+
+        if (existing) {
+            return { success: false, error: 'Déjà complété aujourd\'hui' }
+        }
+
+        // Save completion
+        await ctx.db.insert('gameAttempts', {
+            date: today,
+            mode,
+            guestId,
+            attempts,
+            completed: true,
+            won,
+            time,
+        })
+
+        return { success: true }
+    },
+})

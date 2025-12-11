@@ -1,12 +1,41 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
+import { useState, useEffect } from 'react'
 import { api } from '../../convex/_generated/api'
-import { Calendar, Flame, Dices, Users } from 'lucide-react'
+import { Calendar, Flame, Dices, Users, Check } from 'lucide-react'
 
 export const Route = createFileRoute('/')({ component: HomePage })
 
+// Get or create a guest ID for tracking daily completion
+function getGuestId(): string {
+  if (typeof window === 'undefined') return ''
+  let id = localStorage.getItem('tusmo_playerId')
+  if (!id) {
+    id = crypto.randomUUID()
+    localStorage.setItem('tusmo_playerId', id)
+  }
+  return id
+}
+
 function HomePage() {
   const dailyInfo = useQuery(api.games.getDailyInfo)
+
+  // Guest ID for tracking
+  const [guestId, setGuestId] = useState('')
+
+  useEffect(() => {
+    setGuestId(getGuestId())
+  }, [])
+
+  // Check completion status
+  const dailyCompletion = useQuery(
+    api.games.getDailyCompletion,
+    guestId ? { mode: 'daily', guestId } : 'skip'
+  )
+  const suiteCompletion = useQuery(
+    api.games.getDailyCompletion,
+    guestId ? { mode: 'suite', guestId } : 'skip'
+  )
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
@@ -31,8 +60,14 @@ function HomePage() {
           <Link
             to="/game/$mode"
             params={{ mode: 'daily' }}
-            className="group bg-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl p-6 hover:border-violet-500/50 transition-all hover:shadow-lg hover:shadow-violet-500/10"
+            className="group relative bg-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl p-6 hover:border-violet-500/50 transition-all hover:shadow-lg hover:shadow-violet-500/10"
           >
+            {dailyCompletion?.completed && (
+              <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-green-500/20 rounded-full">
+                <Check className="w-4 h-4 text-green-400" />
+                <span className="text-xs text-green-400 font-medium">Terminé</span>
+              </div>
+            )}
             <div className="flex items-center gap-4 mb-4">
               <div className="p-3 bg-violet-500/20 rounded-xl">
                 <Calendar className="w-8 h-8 text-violet-400" />
@@ -53,8 +88,14 @@ function HomePage() {
           <Link
             to="/game/$mode"
             params={{ mode: 'suite' }}
-            className="group bg-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl p-6 hover:border-orange-500/50 transition-all hover:shadow-lg hover:shadow-orange-500/10"
+            className="group relative bg-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl p-6 hover:border-orange-500/50 transition-all hover:shadow-lg hover:shadow-orange-500/10"
           >
+            {suiteCompletion?.completed && (
+              <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-green-500/20 rounded-full">
+                <Check className="w-4 h-4 text-green-400" />
+                <span className="text-xs text-green-400 font-medium">Terminé</span>
+              </div>
+            )}
             <div className="flex items-center gap-4 mb-4">
               <div className="p-3 bg-orange-500/20 rounded-xl">
                 <Flame className="w-8 h-8 text-orange-400" />
