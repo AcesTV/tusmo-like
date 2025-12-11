@@ -59,11 +59,12 @@ function GamePage() {
         setPlayerName(getPlayerName())
     }, [])
 
-    // For free mode - word length selector
+    // For free mode - word length selector and random seed
     const [freeLength, setFreeLength] = useState(6)
+    const [freeSeed, setFreeSeed] = useState(() => Date.now())
     const randomWord = useQuery(
         api.games.getRandomWord,
-        mode === 'free' ? { length: freeLength } : 'skip'
+        mode === 'free' ? { length: freeLength, seed: freeSeed } : 'skip'
     )
 
     // Game state
@@ -280,7 +281,13 @@ function GamePage() {
 
     const restart = () => {
         if (mode === 'free') {
-            window.location.reload() // Get new random word
+            // Reset game state and get a new word
+            setFreeSeed(Date.now())
+            setAttempts([])
+            setKeyboardState({})
+            setGameOver(false)
+            setWon(false)
+            setError(null)
         }
     }
 

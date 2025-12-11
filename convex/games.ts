@@ -134,10 +134,14 @@ export const getDailyWord = query({
 
 // Random word for free play
 export const getRandomWord = query({
-    args: { length: v.number() },
-    handler: async (_ctx, { length }) => {
+    args: { length: v.number(), seed: v.optional(v.number()) },
+    handler: async (_ctx, { length, seed }) => {
         const words = getWordsByLength(length)
-        const randomWord = words[Math.floor(Math.random() * words.length)]
+        // Use seed if provided, otherwise use random
+        const index = seed
+            ? Math.abs(seed) % words.length
+            : Math.floor(Math.random() * words.length)
+        const randomWord = words[index]
         return {
             length: randomWord.length,
             firstLetter: randomWord[0],
