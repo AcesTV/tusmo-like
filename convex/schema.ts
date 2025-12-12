@@ -54,8 +54,13 @@ export default defineSchema({
   rooms: defineTable({
     code: v.string(),
     hostId: v.string(), // Can be a guestId or stringified userId
-    wordLength: v.number(),
-    words: v.array(v.string()), // 4 words for the series
+    // Legacy field (for backward compatibility)
+    wordLength: v.optional(v.number()),
+    // New range fields
+    minWordLength: v.optional(v.number()), // Minimum word length (4-8)
+    maxWordLength: v.optional(v.number()), // Maximum word length (4-8)
+    wordCount: v.optional(v.number()), // Number of words in the series
+    words: v.array(v.string()), // Words for the series, ordered by increasing length
     state: v.string(), // 'waiting' | 'playing' | 'finished'
     players: v.array(
       v.object({

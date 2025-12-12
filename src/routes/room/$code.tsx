@@ -279,7 +279,7 @@ function RoomPage() {
               Série de {roomState.seriesCount} mots
             </div>
             <div className="text-xs text-gray-500">
-              {roomState.wordLength} lettres
+              {roomState.minWordLength} → {roomState.maxWordLength} lettres
             </div>
           </div>
           <div className="w-20" />

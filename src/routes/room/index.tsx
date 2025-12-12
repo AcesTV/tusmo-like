@@ -37,7 +37,9 @@ function RoomLobby() {
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [roomCode, setRoomCode] = useState('')
-  const [wordLength, setWordLength] = useState(6)
+  const [minLength, setMinLength] = useState(4)
+  const [maxLength, setMaxLength] = useState(8)
+  const [wordCount, setWordCount] = useState(5)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [playerId, setPlayerId] = useState<string | null>(null)
@@ -69,7 +71,9 @@ function RoomLobby() {
       const result = await createRoomMutation({
         hostId: playerId,
         hostName: name.trim(),
-        wordLength,
+        minWordLength: minLength,
+        maxWordLength: maxLength,
+        wordCount: wordCount,
       })
       navigate({ to: '/room/$code', params: { code: result.code } })
     } catch (e) {
@@ -178,23 +182,80 @@ function RoomLobby() {
             </h2>
 
             <div className="mb-4">
-              <label className="block text-sm text-gray-400 mb-2">
-                Longueur des mots
+              <label className="block text-sm text-gray-400 mb-3">
+                Nombre de lettres : <span className="text-pink-400 font-semibold">{minLength} → {maxLength}</span>
               </label>
-              <div className="flex gap-2">
-                {[5, 6, 7, 8].map((len) => (
-                  <button
+
+              <div className="space-y-4">
+                {/* Min length slider */}
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-500 w-8">Min</span>
+                  <input
+                    type="range"
+                    min={4}
+                    max={8}
+                    value={minLength}
+                    onChange={(e) => {
+                      const val = Number(e.target.value)
+                      setMinLength(val)
+                      if (val > maxLength) setMaxLength(val)
+                    }}
+                    className="flex-1 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-pink-500"
+                  />
+                  <span className="text-white font-mono w-6 text-center">{minLength}</span>
+                </div>
+
+                {/* Max length slider */}
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-500 w-8">Max</span>
+                  <input
+                    type="range"
+                    min={4}
+                    max={8}
+                    value={maxLength}
+                    onChange={(e) => {
+                      const val = Number(e.target.value)
+                      setMaxLength(val)
+                      if (val < minLength) setMinLength(val)
+                    }}
+                    className="flex-1 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-pink-500"
+                  />
+                  <span className="text-white font-mono w-6 text-center">{maxLength}</span>
+                </div>
+              </div>
+
+              {/* Visual indicator of word lengths */}
+              <div className="flex justify-between mt-3 px-11">
+                {[4, 5, 6, 7, 8].map((len) => (
+                  <div
                     key={len}
-                    onClick={() => setWordLength(len)}
-                    className={`flex-1 py-2 rounded-lg font-semibold transition-all ${
-                      wordLength === len
-                        ? 'bg-pink-500 text-white'
-                        : 'bg-slate-700 text-gray-400 hover:bg-slate-600'
-                    }`}
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-semibold transition-all ${len >= minLength && len <= maxLength
+                      ? 'bg-pink-500 text-white'
+                      : 'bg-slate-700 text-gray-500'
+                      }`}
                   >
                     {len}
-                  </button>
+                  </div>
                 ))}
+              </div>
+            </div>
+
+            {/* Word count slider */}
+            <div className="mb-4">
+              <label className="block text-sm text-gray-400 mb-3">
+                Nombre de mots : <span className="text-pink-400 font-semibold">{wordCount}</span>
+              </label>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-500">1</span>
+                <input
+                  type="range"
+                  min={1}
+                  max={10}
+                  value={wordCount}
+                  onChange={(e) => setWordCount(Number(e.target.value))}
+                  className="flex-1 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-pink-500"
+                />
+                <span className="text-sm text-gray-500">10</span>
               </div>
             </div>
 

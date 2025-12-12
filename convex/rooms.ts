@@ -19,22 +19,27 @@ function getWordsByLength(length: number): string[] {
     return COMMON_WORDS.filter((word) => word.length === length)
 }
 
-// Generate 4 random words for series
-function generateSeriesWords(length: number): string[] {
-    const words = getWordsByLength(length)
+// Generate words for series with increasing length (progressive difficulty)
+function generateSeriesWords(minLength: number, maxLength: number, wordCount: number): string[] {
     const selected: string[] = []
-    const usedIndices = new Set<number>()
+    const usedWords = new Set<string>()
 
-    for (let i = 0; i < 4; i++) {
-        let index
-        do {
-            index = Math.floor(Math.random() * words.length)
-        } while (usedIndices.has(index))
-        usedIndices.add(index)
-        selected.push(words[index])
+    // For each word, pick a length that progresses from min to max
+    for (let i = 0; i < wordCount; i++) {
+        // Calculate the target length for this word (progressively increasing)
+        const progress = wordCount === 1 ? 0 : i / (wordCount - 1)
+        const targetLength = Math.round(minLength + progress * (maxLength - minLength))
+
+        const wordsOfLength = getWordsByLength(targetLength).filter(w => !usedWords.has(w))
+        if (wordsOfLength.length > 0) {
+            const randomIndex = Math.floor(Math.random() * wordsOfLength.length)
+            const word = wordsOfLength[randomIndex]
+            selected.push(word)
+            usedWords.add(word)
+        }
     }
 
-    return selected
+    return selected // Sorted by increasing length
 }
 
 // Create a new room
@@ -42,16 +47,20 @@ export const createRoom = mutation({
     args: {
         hostId: v.string(),
         hostName: v.string(),
-        wordLength: v.number(),
+        minWordLength: v.number(),
+        maxWordLength: v.number(),
+        wordCount: v.number(),
     },
-    handler: async (ctx, { hostId, hostName, wordLength }) => {
+    handler: async (ctx, { hostId, hostName, minWordLength, maxWordLength, wordCount }) => {
         const code = generateRoomCode()
-        const words = generateSeriesWords(wordLength)
+        const words = generateSeriesWords(minWordLength, maxWordLength, wordCount)
 
         const roomId = await ctx.db.insert('rooms', {
             code,
             hostId,
-            wordLength,
+            minWordLength,
+            maxWordLength,
+            wordCount,
             words,
             state: 'waiting',
             players: [
@@ -128,7 +137,8 @@ export const getRoomState = query({
         return {
             code: room.code,
             hostId: room.hostId,
-            wordLength: room.wordLength,
+            minWordLength: room.minWordLength,
+            maxWordLength: room.maxWordLength,
             state: room.state,
             players: room.players,
             startTime: room.startTime,
@@ -158,7 +168,7 @@ export const startGame = mutation({
         return {
             success: true,
             firstLetter: room.words[0][0],
-            wordLength: room.wordLength,
+            wordLength: room.words[0].length,
         }
     },
 })
@@ -368,7 +378,11 @@ export const restartRoom = mutation({
             return { error: 'Non autorisé' }
         }
 
-        const newWords = generateSeriesWords(room.wordLength)
+        const newWords = generateSeriesWords(
+            room.minWordLength ?? 6,
+            room.maxWordLength ?? 6,
+            room.wordCount ?? 4
+        )
         const resetPlayers = room.players.map((p) => ({
             ...p,
             wordIndex: 0,
