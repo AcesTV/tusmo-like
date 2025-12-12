@@ -132,7 +132,69 @@ code {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Flip animation for grid tiles */
+@keyframes flip-tile {
+  0% {
+    transform: perspective(400px) rotateX(0deg);
+  }
+
+  49% {
+    transform: perspective(400px) rotateX(90deg);
+  }
+
+  50% {
+    transform: perspective(400px) rotateX(90deg);
+  }
+
+  100% {
+    transform: perspective(400px) rotateX(0deg);
+  }
+}
+
+@keyframes flip-tile-content {
+
+  0%,
+  49% {
+    opacity: 0;
+  }
+
+  50%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes flip-tile-bg {
+
+  0%,
+  49% {
+    background-color: rgb(51 65 85);
+    /* slate-700 - neutral gray */
+    border-color: rgb(71 85 105);
+    /* slate-600 */
+  }
+
+  50%,
+  100% {
+    background-color: var(--tile-result-bg);
+    border-color: var(--tile-result-border);
+  }
+}
+
+.animate-flip {
+  animation: flip-tile 0.5s ease-in-out forwards;
+}
+
+.animate-flip.tile-animating {
+  animation: flip-tile 0.5s ease-in-out forwards, flip-tile-bg 0.5s ease-in-out forwards;
+}
+
+.animate-flip .tile-content {
+  animation: flip-tile-content 0.5s ease-in-out forwards;
 }

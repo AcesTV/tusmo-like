@@ -76,6 +76,7 @@ function RoomPage() {
   >({})
   const [error, setError] = useState<string | null>(null)
   const [wordIndex, setWordIndex] = useState(0)
+  const [animatingRow, setAnimatingRow] = useState<number | null>(null)
 
   // Initialize game when word changes
   useEffect(() => {
@@ -175,7 +176,15 @@ function RoomPage() {
         word: currentGuess.toUpperCase(),
         result: result.result as TileStatus[],
       }
+      const newRowIndex = attempts.length
       setAttempts((prev) => [...prev, newAttempt])
+
+      // Trigger flip animation for this row
+      setAnimatingRow(newRowIndex)
+      // Clear animation after all tiles have flipped
+      setTimeout(() => {
+        setAnimatingRow(null)
+      }, currentWord.word.length * 60 + 500)
 
       // Update keyboard state
       const newKeyboardState = { ...keyboardState }
@@ -310,11 +319,10 @@ function RoomPage() {
               {roomState.players.map((player) => (
                 <div
                   key={player.odI}
-                  className={`flex items-center gap-3 p-3 rounded-lg ${
-                    player.odI === playerId
-                      ? 'bg-pink-500/20 border border-pink-500/30'
-                      : 'bg-slate-700/50'
-                  }`}
+                  className={`flex items-center gap-3 p-3 rounded-lg ${player.odI === playerId
+                    ? 'bg-pink-500/20 border border-pink-500/30'
+                    : 'bg-slate-700/50'
+                    }`}
                 >
                   {player.odI === roomState.hostId && (
                     <Crown className="w-4 h-4 text-yellow-400" />
@@ -390,30 +398,28 @@ function RoomPage() {
               {ranking.ranking.map((player, index) => (
                 <div
                   key={player.odI}
-                  className={`flex items-center gap-4 p-4 rounded-xl ${
-                    player.finished
-                      ? index === 0
-                        ? 'bg-yellow-500/20 border border-yellow-500/50'
-                        : index === 1
-                          ? 'bg-gray-400/20 border border-gray-400/50'
-                          : index === 2
-                            ? 'bg-amber-600/20 border border-amber-600/50'
-                            : 'bg-green-500/20 border border-green-500/50'
-                      : 'bg-slate-700/50 opacity-60'
-                  }`}
+                  className={`flex items-center gap-4 p-4 rounded-xl ${player.finished
+                    ? index === 0
+                      ? 'bg-yellow-500/20 border border-yellow-500/50'
+                      : index === 1
+                        ? 'bg-gray-400/20 border border-gray-400/50'
+                        : index === 2
+                          ? 'bg-amber-600/20 border border-amber-600/50'
+                          : 'bg-green-500/20 border border-green-500/50'
+                    : 'bg-slate-700/50 opacity-60'
+                    }`}
                 >
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg ${
-                      player.finished
-                        ? index === 0
-                          ? 'bg-yellow-500 text-black'
-                          : index === 1
-                            ? 'bg-gray-400 text-black'
-                            : index === 2
-                              ? 'bg-amber-600 text-white'
-                              : 'bg-green-500 text-white'
-                        : 'bg-slate-600 text-white'
-                    }`}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg ${player.finished
+                      ? index === 0
+                        ? 'bg-yellow-500 text-black'
+                        : index === 1
+                          ? 'bg-gray-400 text-black'
+                          : index === 2
+                            ? 'bg-amber-600 text-white'
+                            : 'bg-green-500 text-white'
+                      : 'bg-slate-600 text-white'
+                      }`}
                   >
                     {player.finished ? index + 1 : '?'}
                   </div>
@@ -438,11 +444,10 @@ function RoomPage() {
             {roomState.players.map((player) => (
               <div
                 key={player.odI}
-                className={`px-3 py-1 rounded-full text-sm ${
-                  player.finished
-                    ? 'bg-green-500/20 text-green-400'
-                    : 'bg-slate-700 text-gray-400'
-                }`}
+                className={`px-3 py-1 rounded-full text-sm ${player.finished
+                  ? 'bg-green-500/20 text-green-400'
+                  : 'bg-slate-700 text-gray-400'
+                  }`}
               >
                 {player.name}{' '}
                 {player.finished
@@ -488,6 +493,7 @@ function RoomPage() {
             wordLength={currentWord.word.length}
             firstLetter={currentWord.firstLetter}
             foundLetters={foundLetters}
+            animatingRow={animatingRow}
           />
           <Keyboard
             onKey={(key) => (key === 'ENTER' ? submitGuess() : handleKey(key))}
@@ -502,11 +508,10 @@ function RoomPage() {
             {roomState.players.map((player) => (
               <div
                 key={player.odI}
-                className={`px-3 py-1 rounded-full text-sm ${
-                  player.finished
-                    ? 'bg-green-500/20 text-green-400'
-                    : 'bg-slate-700 text-gray-400'
-                }`}
+                className={`px-3 py-1 rounded-full text-sm ${player.finished
+                  ? 'bg-green-500/20 text-green-400'
+                  : 'bg-slate-700 text-gray-400'
+                  }`}
               >
                 {player.name}{' '}
                 {player.finished
@@ -536,26 +541,24 @@ function RoomPage() {
               {ranking.ranking.map((player, index) => (
                 <div
                   key={player.odI}
-                  className={`flex items-center gap-4 p-4 rounded-xl ${
-                    index === 0
-                      ? 'bg-yellow-500/20 border border-yellow-500/50'
-                      : index === 1
-                        ? 'bg-gray-400/20 border border-gray-400/50'
-                        : index === 2
-                          ? 'bg-amber-600/20 border border-amber-600/50'
-                          : 'bg-slate-700/50'
-                  }`}
+                  className={`flex items-center gap-4 p-4 rounded-xl ${index === 0
+                    ? 'bg-yellow-500/20 border border-yellow-500/50'
+                    : index === 1
+                      ? 'bg-gray-400/20 border border-gray-400/50'
+                      : index === 2
+                        ? 'bg-amber-600/20 border border-amber-600/50'
+                        : 'bg-slate-700/50'
+                    }`}
                 >
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg ${
-                      index === 0
-                        ? 'bg-yellow-500 text-black'
-                        : index === 1
-                          ? 'bg-gray-400 text-black'
-                          : index === 2
-                            ? 'bg-amber-600 text-white'
-                            : 'bg-slate-600 text-white'
-                    }`}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg ${index === 0
+                      ? 'bg-yellow-500 text-black'
+                      : index === 1
+                        ? 'bg-gray-400 text-black'
+                        : index === 2
+                          ? 'bg-amber-600 text-white'
+                          : 'bg-slate-600 text-white'
+                      }`}
                   >
                     {index + 1}
                   </div>
@@ -594,11 +597,10 @@ function RoomPage() {
           <div className="flex gap-4">
             <button
               onClick={handleRestart}
-              className={`flex items-center gap-2 px-6 py-3 font-semibold rounded-xl transition-colors ${
-                isHost
-                  ? 'bg-green-500 hover:bg-green-600 text-white'
-                  : 'bg-slate-700 text-gray-400 cursor-default'
-              }`}
+              className={`flex items-center gap-2 px-6 py-3 font-semibold rounded-xl transition-colors ${isHost
+                ? 'bg-green-500 hover:bg-green-600 text-white'
+                : 'bg-slate-700 text-gray-400 cursor-default'
+                }`}
             >
               <RotateCcw className="w-5 h-5" />
               {isHost ? 'Nouvelle partie' : 'En attente...'}
