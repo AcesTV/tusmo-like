@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { api } from '../../convex/_generated/api'
 import { Calendar, Flame, Dices, Users, Check } from 'lucide-react'
 import Header from '@/components/Header'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 
 export const Route = createFileRoute('/')({ component: HomePage })
 
@@ -31,11 +33,11 @@ function HomePage() {
   // Check completion status
   const dailyCompletion = useQuery(
     api.games.getDailyCompletion,
-    guestId ? { mode: 'daily', guestId } : 'skip'
+    guestId ? { mode: 'daily', guestId } : 'skip',
   )
   const suiteCompletion = useQuery(
     api.games.getDailyCompletion,
-    guestId ? { mode: 'suite', guestId } : 'skip'
+    guestId ? { mode: 'suite', guestId } : 'skip',
   )
 
   return (
@@ -60,105 +62,126 @@ function HomePage() {
       <section className="py-8 px-6 max-w-5xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Mot du Jour */}
-          <Link
-            to="/game/$mode"
-            params={{ mode: 'daily' }}
-            className="group relative bg-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl p-6 hover:border-violet-500/50 transition-all hover:shadow-lg hover:shadow-violet-500/10"
-          >
-            {dailyCompletion?.completed && (
-              <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-green-500/20 rounded-full">
-                <Check className="w-4 h-4 text-green-400" />
-                <span className="text-xs text-green-400 font-medium">Terminé</span>
-              </div>
-            )}
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-violet-500/20 rounded-xl">
-                <Calendar className="w-8 h-8 text-violet-400" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-white">Mot du Jour</h3>
-                <p className="text-sm text-gray-400">
-                  {dailyInfo?.daily.length ?? '?'} lettres
+          <Link to="/game/$mode" params={{ mode: 'daily' }}>
+            <Card className="group relative bg-slate-800/50 backdrop-blur border-slate-700 hover:border-violet-500/50 transition-all hover:shadow-lg hover:shadow-violet-500/10 h-full">
+              {dailyCompletion?.completed && (
+                <Badge className="absolute top-3 right-3 bg-green-500/20 text-green-400 hover:bg-green-500/30">
+                  <Check className="w-3 h-3 mr-1" />
+                  Terminé
+                </Badge>
+              )}
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-violet-500/20 rounded-xl">
+                    <Calendar className="w-8 h-8 text-violet-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white">
+                      Mot du Jour
+                    </h3>
+                    <p className="text-sm text-gray-400">
+                      {dailyInfo?.daily.length ?? '?'} lettres
+                    </p>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-400">
+                  Un nouveau mot chaque jour. Comparez vos scores!
                 </p>
-              </div>
-            </div>
-            <p className="text-gray-400">
-              Un nouveau mot chaque jour. Comparez vos scores!
-            </p>
+              </CardContent>
+            </Card>
           </Link>
 
           {/* Suite du Jour */}
-          <Link
-            to="/game/$mode"
-            params={{ mode: 'suite' }}
-            className="group relative bg-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl p-6 hover:border-orange-500/50 transition-all hover:shadow-lg hover:shadow-orange-500/10"
-          >
-            {suiteCompletion?.completed && (
-              <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-green-500/20 rounded-full">
-                <Check className="w-4 h-4 text-green-400" />
-                <span className="text-xs text-green-400 font-medium">Terminé</span>
-              </div>
-            )}
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-orange-500/20 rounded-xl">
-                <Flame className="w-8 h-8 text-orange-400" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-white">Suite du Jour</h3>
-                <p className="text-sm text-gray-400">
-                  {dailyInfo?.suite.totalWords ?? 5} mots à découvrir
+          <Link to="/game/$mode" params={{ mode: 'suite' }}>
+            <Card className="group relative bg-slate-800/50 backdrop-blur border-slate-700 hover:border-orange-500/50 transition-all hover:shadow-lg hover:shadow-orange-500/10 h-full">
+              {suiteCompletion?.completed && (
+                <Badge className="absolute top-3 right-3 bg-green-500/20 text-green-400 hover:bg-green-500/30">
+                  <Check className="w-3 h-3 mr-1" />
+                  Terminé
+                </Badge>
+              )}
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-orange-500/20 rounded-xl">
+                    <Flame className="w-8 h-8 text-orange-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white">
+                      Suite du Jour
+                    </h3>
+                    <p className="text-sm text-gray-400">
+                      {dailyInfo?.suite.totalWords ?? 5} mots à découvrir
+                    </p>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-400">
+                  Enchaînez les mots de 4 à 8 lettres!
                 </p>
-              </div>
-            </div>
-            <p className="text-gray-400">
-              Enchaînez les mots de 4 à 8 lettres!
-            </p>
+              </CardContent>
+            </Card>
           </Link>
 
           {/* Partie Libre */}
-          <Link
-            to="/game/$mode"
-            params={{ mode: 'free' }}
-            className="group bg-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl p-6 hover:border-cyan-500/50 transition-all hover:shadow-lg hover:shadow-cyan-500/10"
-          >
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-cyan-500/20 rounded-xl">
-                <Dices className="w-8 h-8 text-cyan-400" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-white">Partie Libre</h3>
-                <p className="text-sm text-gray-400">Entraînez-vous</p>
-              </div>
-            </div>
-            <p className="text-gray-400">
-              Jouez autant que vous voulez avec des mots aléatoires.
-            </p>
+          <Link to="/game/$mode" params={{ mode: 'free' }}>
+            <Card className="group bg-slate-800/50 backdrop-blur border-slate-700 hover:border-cyan-500/50 transition-all hover:shadow-lg hover:shadow-cyan-500/10 h-full">
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-cyan-500/20 rounded-xl">
+                    <Dices className="w-8 h-8 text-cyan-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white">
+                      Partie Libre
+                    </h3>
+                    <p className="text-sm text-gray-400">Entraînez-vous</p>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-400">
+                  Jouez autant que vous voulez avec des mots aléatoires.
+                </p>
+              </CardContent>
+            </Card>
           </Link>
 
           {/* Multijoueur */}
-          <Link
-            to="/room"
-            className="group bg-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl p-6 hover:border-pink-500/50 transition-all hover:shadow-lg hover:shadow-pink-500/10"
-          >
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-pink-500/20 rounded-xl">
-                <Users className="w-8 h-8 text-pink-400" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-white">Multijoueur</h3>
-                <p className="text-sm text-gray-400">Série de 4 mots</p>
-              </div>
-            </div>
-            <p className="text-gray-400">Affrontez vos amis en temps réel!</p>
+          <Link to="/room">
+            <Card className="group bg-slate-800/50 backdrop-blur border-slate-700 hover:border-pink-500/50 transition-all hover:shadow-lg hover:shadow-pink-500/10 h-full">
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-pink-500/20 rounded-xl">
+                    <Users className="w-8 h-8 text-pink-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white">
+                      Multijoueur
+                    </h3>
+                    <p className="text-sm text-gray-400">Série de 4 mots</p>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-400">
+                  Affrontez vos amis en temps réel!
+                </p>
+              </CardContent>
+            </Card>
           </Link>
         </div>
       </section>
 
       {/* Rules */}
       <section className="py-8 px-6 max-w-3xl mx-auto">
-        <div className="bg-slate-800/30 rounded-2xl p-6 border border-slate-700">
-          <h2 className="text-lg font-bold text-white mb-4">Comment jouer ?</h2>
-          <div className="space-y-3 text-gray-400">
+        <Card className="bg-slate-800/30 border-slate-700">
+          <CardHeader>
+            <h2 className="text-lg font-bold text-white">Comment jouer ?</h2>
+          </CardHeader>
+          <CardContent className="space-y-3 text-gray-400">
             <p>
               • Devinez le mot en{' '}
               <strong className="text-white">6 essais maximum</strong>
@@ -185,8 +208,8 @@ function HomePage() {
               </span>
               <span>Lettre absente du mot</span>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </section>
     </div>
   )

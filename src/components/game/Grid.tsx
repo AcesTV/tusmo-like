@@ -14,15 +14,6 @@ interface TileProps {
   flipDelay?: number
 }
 
-// Map status to CSS custom property values for the reveal animation
-const statusColors: Record<TileStatus, { bg: string; border: string }> = {
-  correct: { bg: 'rgb(34 197 94)', border: 'rgb(34 197 94)' }, // green-500
-  present: { bg: 'rgb(234 179 8)', border: 'rgb(234 179 8)' }, // yellow-500
-  absent: { bg: 'rgb(71 85 105)', border: 'rgb(71 85 105)' }, // slate-600
-  empty: { bg: 'transparent', border: 'transparent' },
-  filled: { bg: 'rgb(51 65 85)', border: 'rgb(34 211 238)' }, // slate-700, cyan-400
-}
-
 export function Tile({
   letter,
   status,
@@ -31,31 +22,88 @@ export function Tile({
   animate,
   flipDelay = 0,
 }: TileProps) {
-  const colors = statusColors[status]
+  // Get inline styles using CSS variables
+  const getStatusStyles = (): React.CSSProperties => {
+    if (animate) {
+      // During animation, set the target colors for the flip reveal
+      const statusMap: Record<TileStatus, { bg: string; border: string }> = {
+        correct: { bg: 'var(--tile-correct)', border: 'var(--tile-correct)' },
+        present: { bg: 'var(--tile-present)', border: 'var(--tile-present)' },
+        absent: { bg: 'var(--tile-absent)', border: 'var(--tile-absent)' },
+        empty: {
+          bg: 'var(--tile-empty-bg)',
+          border: 'var(--tile-empty-border)',
+        },
+        filled: {
+          bg: 'var(--tile-filled-bg)',
+          border: 'var(--tile-filled-border)',
+        },
+      }
+      const colors = statusMap[status]
+      return {
+        animationDelay: `${flipDelay}ms`,
+        '--tile-result-bg': colors.bg,
+        '--tile-result-border': colors.border,
+      } as React.CSSProperties
+    }
+
+    // Non-animated states use inline styles with CSS variables
+    if (isFirstLetter) {
+      return {
+        backgroundColor: 'var(--tile-correct)',
+        borderColor: 'var(--tile-correct)',
+        color: 'white',
+      }
+    }
+    if (isPlaceholder) {
+      return {
+        backgroundColor: 'var(--tile-placeholder-bg)',
+        borderColor: 'var(--tile-placeholder-border)',
+        color: 'var(--tile-placeholder-text)',
+      }
+    }
+
+    const styleMap: Record<TileStatus, React.CSSProperties> = {
+      correct: {
+        backgroundColor: 'var(--tile-correct)',
+        borderColor: 'var(--tile-correct)',
+        color: 'white',
+      },
+      present: {
+        backgroundColor: 'var(--tile-present)',
+        borderColor: 'var(--tile-present)',
+        color: 'white',
+      },
+      absent: {
+        backgroundColor: 'var(--tile-absent)',
+        borderColor: 'var(--tile-absent)',
+        color: 'white',
+      },
+      empty: {
+        backgroundColor: 'var(--tile-empty-bg)',
+        borderColor: 'var(--tile-empty-border)',
+        color: 'var(--muted-foreground)',
+      },
+      filled: {
+        backgroundColor: 'var(--tile-filled-bg)',
+        borderColor: 'var(--tile-filled-border)',
+        color: 'white',
+        transform: 'scale(1.05)',
+        boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+      },
+    }
+    return styleMap[status]
+  }
 
   return (
     <div
       className={cn(
         'w-12 h-12 md:w-14 md:h-14 flex items-center justify-center',
         'text-xl md:text-2xl font-bold uppercase rounded-lg border-2',
-        // During animation: start with neutral gray, CSS will reveal the color
+        'transition-all duration-200',
         animate && 'animate-flip tile-animating',
-        // Non-animated states
-        !animate && status === 'empty' && 'bg-slate-800/50 border-slate-600/50 text-slate-600',
-        !animate && status === 'filled' && 'bg-slate-700 border-cyan-400 text-white scale-105 shadow-lg shadow-cyan-500/20',
-        !animate && status === 'correct' && 'bg-green-500 border-green-500 text-white',
-        !animate && status === 'present' && 'bg-yellow-500 border-yellow-500 text-white',
-        !animate && status === 'absent' && 'bg-slate-600 border-slate-600 text-white',
-        !animate && isFirstLetter && 'bg-green-500 border-green-500 text-white',
-        !animate && isPlaceholder && 'bg-green-600/40 border-green-500/60 text-green-300',
-        // Animated: always white text
-        animate && 'text-white',
       )}
-      style={animate ? {
-        animationDelay: `${flipDelay}ms`,
-        '--tile-result-bg': colors.bg,
-        '--tile-result-border': colors.border,
-      } as React.CSSProperties : undefined}
+      style={getStatusStyles()}
     >
       <span
         className="tile-content"

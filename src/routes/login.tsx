@@ -3,6 +3,9 @@ import { useConvexAuth } from 'convex/react'
 import { useEffect } from 'react'
 import { GoogleLoginButton } from '@/components/auth/AuthButtons'
 import { ArrowLeft } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Separator } from '@/components/ui/separator'
 
 export const Route = createFileRoute('/login')({ component: LoginPage })
 
@@ -21,13 +24,16 @@ function LoginPage() {
     <div className="min-h-screen bg-linear-to-b from-slate-900 via-slate-800 to-slate-900 flex flex-col">
       {/* Header */}
       <header className="p-4 flex items-center">
-        <Link
-          to="/"
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+        <Button
+          variant="ghost"
+          asChild
+          className="text-gray-400 hover:text-white"
         >
-          <ArrowLeft className="w-5 h-5" />
-          <span>Retour</span>
-        </Link>
+          <Link to="/">
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            Retour
+          </Link>
+        </Button>
       </header>
 
       {/* Login content */}
@@ -46,39 +52,42 @@ function LoginPage() {
           </div>
 
           {/* Login card */}
-          <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl p-8">
-            <h2 className="text-xl font-bold text-white text-center mb-6">
-              Connexion
-            </h2>
-
-            {isLoading ? (
-              <div className="text-center text-gray-400">Chargement...</div>
-            ) : (
-              <div className="space-y-4">
-                {/* Google */}
-                <div className="flex justify-center">
-                  <GoogleLoginButton />
-                </div>
-
-                {/* Divider for future auth methods */}
-                <div className="relative my-6">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-slate-600"></div>
+          <Card className="bg-slate-800/50 backdrop-blur border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-xl text-white text-center">
+                Connexion
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="text-center text-gray-400">Chargement...</div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Google */}
+                  <div className="flex justify-center">
+                    <GoogleLoginButton />
                   </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-4 bg-slate-800/50 text-gray-400">
-                      ou
-                    </span>
-                  </div>
-                </div>
 
-                {/* Placeholder for future auth methods */}
-                <p className="text-center text-sm text-gray-500">
-                  D'autres méthodes de connexion bientôt disponibles
-                </p>
-              </div>
-            )}
-          </div>
+                  {/* Divider for future auth methods */}
+                  <div className="relative my-6">
+                    <div className="absolute inset-0 flex items-center">
+                      <Separator className="w-full bg-slate-600" />
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-4 bg-slate-800/50 text-gray-400">
+                        ou
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Placeholder for future auth methods */}
+                  <p className="text-center text-sm text-gray-500">
+                    D'autres méthodes de connexion bientôt disponibles
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Footer note */}
           <p className="text-center text-xs text-gray-500 mt-6">
