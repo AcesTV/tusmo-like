@@ -54,17 +54,17 @@ code {
   --sidebar-border: oklch(0.88 0.015 230);
   --sidebar-ring: oklch(0.6 0.18 145);
 
-  /* Tile status colors */
-  --tile-correct: oklch(0.6 0.18 145);
-  --tile-present: oklch(0.75 0.17 85);
-  --tile-absent: oklch(0.45 0.03 240);
-  --tile-empty-bg: oklch(0.92 0.008 230);
-  --tile-empty-border: oklch(0.85 0.01 230);
-  --tile-filled-bg: oklch(0.88 0.01 230);
-  --tile-filled-border: oklch(0.6 0.18 145);
-  --tile-placeholder-bg: oklch(0.85 0.08 145);
-  --tile-placeholder-border: oklch(0.7 0.12 145);
-  --tile-placeholder-text: oklch(0.4 0.1 145);
+  /* Tile status colors - Matching the game reference */
+  --tile-correct: #22c55e;
+  --tile-present: #eab308;
+  --tile-absent: #475569;
+  --tile-empty-bg: transparent;
+  --tile-empty-border: #334155;
+  --tile-filled-bg: #1e293b;
+  --tile-filled-border: #22d3ee;
+  --tile-placeholder-bg: rgba(34, 197, 94, 0.3);
+  --tile-placeholder-border: rgba(34, 197, 94, 0.6);
+  --tile-placeholder-text: #86efac;
 }
 
 .dark {
@@ -102,17 +102,17 @@ code {
   --sidebar-border: oklch(0.35 0.025 240);
   --sidebar-ring: oklch(0.65 0.18 145);
 
-  /* Tile status colors */
-  --tile-correct: oklch(0.6 0.18 145);
-  --tile-present: oklch(0.75 0.17 85);
-  --tile-absent: oklch(0.4 0.03 240);
-  --tile-empty-bg: oklch(0.25 0.02 240);
-  --tile-empty-border: oklch(0.35 0.025 240);
-  --tile-filled-bg: oklch(0.3 0.025 240);
-  --tile-filled-border: oklch(0.65 0.18 145);
-  --tile-placeholder-bg: oklch(0.35 0.06 145);
-  --tile-placeholder-border: oklch(0.5 0.1 145);
-  --tile-placeholder-text: oklch(0.7 0.1 145);
+  /* Tile status colors - Matching the game reference */
+  --tile-correct: #22c55e;
+  --tile-present: #eab308;
+  --tile-absent: #475569;
+  --tile-empty-bg: transparent;
+  --tile-empty-border: #334155;
+  --tile-filled-bg: #1e293b;
+  --tile-filled-border: #22d3ee;
+  --tile-placeholder-bg: rgba(34, 197, 94, 0.3);
+  --tile-placeholder-border: rgba(34, 197, 94, 0.6);
+  --tile-placeholder-text: #86efac;
 }
 
 @theme inline {
@@ -202,23 +202,27 @@ code {
     /* slate-700 - neutral gray */
     border-color: rgb(71 85 105);
     /* slate-600 */
+    color: white;
   }
 
   50%,
   100% {
     background-color: var(--tile-result-bg);
     border-color: var(--tile-result-border);
+    color: white;
   }
 }
 
 .animate-flip {
   animation: flip-tile 0.5s ease-in-out forwards;
+  color: white !important;
 }
 
 .animate-flip.tile-animating {
   animation:
     flip-tile 0.5s ease-in-out forwards,
     flip-tile-bg 0.5s ease-in-out forwards;
+  color: white !important;
 }
 
 .animate-flip .tile-content {
