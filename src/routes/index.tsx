@@ -3,6 +3,7 @@ import { useQuery } from 'convex/react'
 import { useState, useEffect } from 'react'
 import { api } from '../../convex/_generated/api'
 import { Calendar, Flame, Dices, Users, Check } from 'lucide-react'
+import Header from '@/components/Header'
 
 export const Route = createFileRoute('/')({ component: HomePage })
 
@@ -38,12 +39,14 @@ function HomePage() {
   )
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-linear-to-b from-slate-900 via-slate-800 to-slate-900">
+      <Header />
+
       {/* Hero */}
       <section className="relative py-12 px-6 text-center">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-5xl md:text-6xl font-black mb-4">
-            <span className="bg-gradient-to-r from-violet-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-violet-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
               TUSMO
             </span>
           </h1>
@@ -146,9 +149,7 @@ function HomePage() {
                 <p className="text-sm text-gray-400">Série de 4 mots</p>
               </div>
             </div>
-            <p className="text-gray-400">
-              Affrontez vos amis en temps réel!
-            </p>
+            <p className="text-gray-400">Affrontez vos amis en temps réel!</p>
           </Link>
         </div>
       </section>
@@ -158,18 +159,30 @@ function HomePage() {
         <div className="bg-slate-800/30 rounded-2xl p-6 border border-slate-700">
           <h2 className="text-lg font-bold text-white mb-4">Comment jouer ?</h2>
           <div className="space-y-3 text-gray-400">
-            <p>• Devinez le mot en <strong className="text-white">6 essais maximum</strong></p>
-            <p>• La <strong className="text-white">première lettre</strong> vous est donnée</p>
+            <p>
+              • Devinez le mot en{' '}
+              <strong className="text-white">6 essais maximum</strong>
+            </p>
+            <p>
+              • La <strong className="text-white">première lettre</strong> vous
+              est donnée
+            </p>
             <div className="flex items-center gap-4 mt-4">
-              <span className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center text-white font-bold">T</span>
+              <span className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center text-white font-bold">
+                T
+              </span>
               <span>Lettre correcte et bien placée</span>
             </div>
             <div className="flex items-center gap-4">
-              <span className="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center text-white font-bold">U</span>
+              <span className="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center text-white font-bold">
+                U
+              </span>
               <span>Lettre correcte mais mal placée</span>
             </div>
             <div className="flex items-center gap-4">
-              <span className="w-10 h-10 bg-slate-600 rounded-lg flex items-center justify-center text-white font-bold">X</span>
+              <span className="w-10 h-10 bg-slate-600 rounded-lg flex items-center justify-center text-white font-bold">
+                X
+              </span>
               <span>Lettre absente du mot</span>
             </div>
           </div>

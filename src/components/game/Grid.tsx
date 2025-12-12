@@ -1,121 +1,127 @@
 'use client'
 
 import { cn } from '@/lib/utils'
+import { JSX } from 'react'
 
 export type TileStatus = 'correct' | 'present' | 'absent' | 'empty' | 'filled'
 
 interface TileProps {
-    letter: string
-    status: TileStatus
-    isFirstLetter?: boolean
-    isPlaceholder?: boolean
-    animate?: boolean
+  letter: string
+  status: TileStatus
+  isFirstLetter?: boolean
+  isPlaceholder?: boolean
+  animate?: boolean
 }
 
 export function Tile({
-    letter,
-    status,
-    isFirstLetter,
-    isPlaceholder,
-    animate,
+  letter,
+  status,
+  isFirstLetter,
+  isPlaceholder,
+  animate,
 }: TileProps) {
-    return (
-        <div
-            className={cn(
-                'w-12 h-12 md:w-14 md:h-14 flex items-center justify-center',
-                'text-xl md:text-2xl font-bold uppercase rounded-lg border-2',
-                'transition-all duration-200',
-                // Default state - empty cells
-                status === 'empty' && 'bg-slate-800/50 border-slate-600/50 text-slate-600',
-                // Filled state - current typing (much more visible)
-                status === 'filled' && 'bg-slate-700 border-cyan-400 text-white scale-105 shadow-lg shadow-cyan-500/20',
-                // Result states
-                status === 'correct' && 'bg-green-500 border-green-500 text-white',
-                status === 'present' && 'bg-yellow-500 border-yellow-500 text-white',
-                status === 'absent' && 'bg-slate-600 border-slate-600 text-white',
-                // First letter - given hint
-                isFirstLetter && 'bg-green-500 border-green-500 text-white',
-                // Placeholder - found letters hint (more visible)
-                isPlaceholder && 'bg-green-600/40 border-green-500/60 text-green-300',
-                // Animation
-                animate && 'animate-flip'
-            )}
-        >
-            {letter}
-        </div>
-    )
+  return (
+    <div
+      className={cn(
+        'w-12 h-12 md:w-14 md:h-14 flex items-center justify-center',
+        'text-xl md:text-2xl font-bold uppercase rounded-lg border-2',
+        'transition-all duration-200',
+        // Default state - empty cells
+        status === 'empty' &&
+          'bg-slate-800/50 border-slate-600/50 text-slate-600',
+        // Filled state - current typing (much more visible)
+        status === 'filled' &&
+          'bg-slate-700 border-cyan-400 text-white scale-105 shadow-lg shadow-cyan-500/20',
+        // Result states
+        status === 'correct' && 'bg-green-500 border-green-500 text-white',
+        status === 'present' && 'bg-yellow-500 border-yellow-500 text-white',
+        status === 'absent' && 'bg-slate-600 border-slate-600 text-white',
+        // First letter - given hint
+        isFirstLetter && 'bg-green-500 border-green-500 text-white',
+        // Placeholder - found letters hint (more visible)
+        isPlaceholder && 'bg-green-600/40 border-green-500/60 text-green-300',
+        // Animation
+        animate && 'animate-flip',
+      )}
+    >
+      {letter}
+    </div>
+  )
 }
 
 interface GridProps {
-    attempts: { word: string; result: TileStatus[] }[]
-    currentGuess: string
-    wordLength: number
-    firstLetter: string
-    foundLetters: (string | null)[]
-    maxAttempts?: number
+  attempts: { word: string; result: TileStatus[] }[]
+  currentGuess: string
+  wordLength: number
+  firstLetter: string
+  foundLetters: (string | null)[]
+  maxAttempts?: number
 }
 
 export function Grid({
-    attempts,
-    currentGuess,
-    wordLength,
-    firstLetter,
-    foundLetters,
-    maxAttempts = 6,
+  attempts,
+  currentGuess,
+  wordLength,
+  firstLetter,
+  foundLetters,
+  maxAttempts = 6,
 }: GridProps) {
-    const rows: JSX.Element[] = []
+  const rows: JSX.Element[] = []
 
-    for (let row = 0; row < maxAttempts; row++) {
-        const tiles: JSX.Element[] = []
+  for (let row = 0; row < maxAttempts; row++) {
+    const tiles: JSX.Element[] = []
 
-        for (let col = 0; col < wordLength; col++) {
-            let letter = ''
-            let status: TileStatus = 'empty'
-            let isFirstLetter = false
-            let isPlaceholder = false
+    for (let col = 0; col < wordLength; col++) {
+      let letter = ''
+      let status: TileStatus = 'empty'
+      let isFirstLetter = false
+      let isPlaceholder = false
 
-            if (row < attempts.length) {
-                // Completed row
-                letter = attempts[row].word[col]
-                status = attempts[row].result[col]
-            } else if (row === attempts.length) {
-                // Current row
-                if (col < currentGuess.length) {
-                    letter = currentGuess[col]
-                    // Check if this letter matches a confirmed position (foundLetter)
-                    if (foundLetters[col] && currentGuess[col].toUpperCase() === foundLetters[col]!.toUpperCase()) {
-                        isFirstLetter = true // Use green styling for correct position
-                    } else {
-                        status = 'filled'
-                    }
-                } else if (col === 0) {
-                    letter = firstLetter
-                    isFirstLetter = true
-                } else if (foundLetters[col]) {
-                    letter = foundLetters[col]!
-                    isPlaceholder = true
-                }
-            } else {
-                // Future row - keep empty, don't show first letter
-            }
-
-            tiles.push(
-                <Tile
-                    key={col}
-                    letter={letter}
-                    status={status}
-                    isFirstLetter={isFirstLetter}
-                    isPlaceholder={isPlaceholder}
-                />
-            )
+      if (row < attempts.length) {
+        // Completed row
+        letter = attempts[row].word[col]
+        status = attempts[row].result[col]
+      } else if (row === attempts.length) {
+        // Current row
+        if (col < currentGuess.length) {
+          letter = currentGuess[col]
+          // Check if this letter matches a confirmed position (foundLetter)
+          if (
+            foundLetters[col] &&
+            currentGuess[col].toUpperCase() === foundLetters[col]!.toUpperCase()
+          ) {
+            isFirstLetter = true // Use green styling for correct position
+          } else {
+            status = 'filled'
+          }
+        } else if (col === 0) {
+          letter = firstLetter
+          isFirstLetter = true
+        } else if (foundLetters[col]) {
+          letter = foundLetters[col]!
+          isPlaceholder = true
         }
+      } else {
+        // Future row - keep empty, don't show first letter
+      }
 
-        rows.push(
-            <div key={row} className="flex gap-1.5 md:gap-2">
-                {tiles}
-            </div>
-        )
+      tiles.push(
+        <Tile
+          key={col}
+          letter={letter}
+          status={status}
+          isFirstLetter={isFirstLetter}
+          isPlaceholder={isPlaceholder}
+        />,
+      )
     }
 
-    return <div className="flex flex-col gap-1.5 md:gap-2">{rows}</div>
+    rows.push(
+      <div key={row} className="flex gap-1.5 md:gap-2">
+        {tiles}
+      </div>,
+    )
+  }
+
+  return <div className="flex flex-col gap-1.5 md:gap-2">{rows}</div>
 }

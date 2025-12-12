@@ -111,7 +111,10 @@ function RoomLobby() {
         return
       }
 
-      navigate({ to: '/room/$code', params: { code: roomCode.trim().toUpperCase() } })
+      navigate({
+        to: '/room/$code',
+        params: { code: roomCode.trim().toUpperCase() },
+      })
     } catch (e) {
       setError('Erreur lors de la connexion')
       setLoading(false)
@@ -119,10 +122,13 @@ function RoomLobby() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 flex flex-col">
+    <div className="min-h-screen bg-linear-to-b from-slate-900 via-slate-800 to-slate-900 flex flex-col">
       {/* Header */}
-      <header className="p-4 flex items-center">
-        <Link to="/" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
+      <header className="fixed top-0 left-0 p-4 flex items-center">
+        <Link
+          to="/"
+          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+        >
           <ArrowLeft className="w-5 h-5" />
           <span>Retour</span>
         </Link>
@@ -137,7 +143,9 @@ function RoomLobby() {
               <Users className="w-6 h-6 text-pink-400" />
               <span className="text-pink-400 font-semibold">Multijoueur</span>
             </div>
-            <h1 className="text-3xl font-bold text-white">Créer ou rejoindre une partie</h1>
+            <h1 className="text-3xl font-bold text-white">
+              Créer ou rejoindre une partie
+            </h1>
           </div>
 
           {/* Error message */}
@@ -149,7 +157,9 @@ function RoomLobby() {
 
           {/* Name input */}
           <div className="mb-6">
-            <label className="block text-sm text-gray-400 mb-2">Votre pseudo</label>
+            <label className="block text-sm text-gray-400 mb-2">
+              Votre pseudo
+            </label>
             <input
               type="text"
               value={name}
@@ -168,16 +178,19 @@ function RoomLobby() {
             </h2>
 
             <div className="mb-4">
-              <label className="block text-sm text-gray-400 mb-2">Longueur des mots</label>
+              <label className="block text-sm text-gray-400 mb-2">
+                Longueur des mots
+              </label>
               <div className="flex gap-2">
                 {[5, 6, 7, 8].map((len) => (
                   <button
                     key={len}
                     onClick={() => setWordLength(len)}
-                    className={`flex-1 py-2 rounded-lg font-semibold transition-all ${wordLength === len
-                      ? 'bg-pink-500 text-white'
-                      : 'bg-slate-700 text-gray-400 hover:bg-slate-600'
-                      }`}
+                    className={`flex-1 py-2 rounded-lg font-semibold transition-all ${
+                      wordLength === len
+                        ? 'bg-pink-500 text-white'
+                        : 'bg-slate-700 text-gray-400 hover:bg-slate-600'
+                    }`}
                   >
                     {len}
                   </button>
@@ -203,7 +216,9 @@ function RoomLobby() {
             </h2>
 
             <div className="mb-4">
-              <label className="block text-sm text-gray-400 mb-2">Code de la room</label>
+              <label className="block text-sm text-gray-400 mb-2">
+                Code de la room
+              </label>
               <input
                 type="text"
                 value={roomCode}
