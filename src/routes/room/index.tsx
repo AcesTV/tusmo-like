@@ -2,7 +2,7 @@
 
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
-import { useMutation } from 'convex/react'
+import { useMutation, useConvexAuth, useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { Users, Plus, ArrowRight, ArrowLeft } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
@@ -36,6 +36,9 @@ function setPlayerName(name: string) {
 
 function RoomLobby() {
   const navigate = useNavigate()
+  const { isAuthenticated } = useConvexAuth()
+  const currentUser = useQuery(api.users.getCurrentUser)
+
   const [name, setName] = useState('')
   const [roomCode, setRoomCode] = useState('')
   const [minLength, setMinLength] = useState(4)
@@ -48,14 +51,21 @@ function RoomLobby() {
   const createRoomMutation = useMutation(api.rooms.createRoom)
   const joinRoomMutation = useMutation(api.rooms.joinRoom)
 
+  // Get display name: use logged-in user name or local storage name
+  const displayName = isAuthenticated && currentUser
+    ? (currentUser.username || currentUser.name || 'Joueur')
+    : name
+
   // Load saved name and player ID (client-side only)
   useEffect(() => {
-    setName(getPlayerName())
+    if (!isAuthenticated) {
+      setName(getPlayerName())
+    }
     setPlayerId(getPlayerId())
-  }, [])
+  }, [isAuthenticated])
 
   const handleCreateRoom = async () => {
-    if (!name.trim()) {
+    if (!displayName.trim()) {
       setError('Entrez votre pseudo')
       return
     }
@@ -66,12 +76,14 @@ function RoomLobby() {
 
     setLoading(true)
     setError(null)
-    setPlayerName(name.trim())
+    if (!isAuthenticated) {
+      setPlayerName(displayName.trim())
+    }
 
     try {
       const result = await createRoomMutation({
         hostId: playerId,
-        hostName: name.trim(),
+        hostName: displayName.trim(),
         minWordLength: minLength,
         maxWordLength: maxLength,
         wordCount: wordCount,
@@ -84,7 +96,7 @@ function RoomLobby() {
   }
 
   const handleJoinRoom = async () => {
-    if (!name.trim()) {
+    if (!displayName.trim()) {
       setError('Entrez votre pseudo')
       return
     }
@@ -95,7 +107,9 @@ function RoomLobby() {
 
     setLoading(true)
     setError(null)
-    setPlayerName(name.trim())
+    if (!isAuthenticated) {
+      setPlayerName(displayName.trim())
+    }
 
     if (!playerId) {
       setError('Chargement en cours...')
@@ -107,7 +121,7 @@ function RoomLobby() {
       const result = await joinRoomMutation({
         code: roomCode.trim().toUpperCase(),
         odI: playerId,
-        name: name.trim(),
+        name: displayName.trim(),
       })
 
       if ('error' in result && result.error) {
@@ -159,20 +173,37 @@ function RoomLobby() {
             </div>
           )}
 
-          {/* Name input */}
-          <div className="mb-6">
-            <label className="block text-sm text-gray-400 mb-2">
-              Votre pseudo
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Entrez votre pseudo"
-              className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-500 transition-colors"
-              maxLength={20}
-            />
-          </div>
+          {/* Name input - only shown if not logged in */}
+          {!isAuthenticated && (
+            <div className="mb-6">
+              <label className="block text-sm text-gray-400 mb-2">
+                Votre pseudo
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Entrez votre pseudo"
+                className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-500 transition-colors"
+                maxLength={20}
+              />
+            </div>
+          )}
+
+          {/* Logged in user display */}
+          {isAuthenticated && currentUser && (
+            <div className="mb-6 p-4 bg-slate-800/50 border border-slate-700 rounded-xl flex items-center gap-3">
+              <div className="w-10 h-10 bg-pink-500/20 rounded-full flex items-center justify-center">
+                <span className="text-pink-400 font-semibold">
+                  {displayName.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <div>
+                <div className="text-white font-medium">{displayName}</div>
+                <div className="text-xs text-gray-500">Connecté</div>
+              </div>
+            </div>
+          )}
 
           {/* Create room section */}
           <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 mb-6">
