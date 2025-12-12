@@ -6,6 +6,7 @@ import { useMutation } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { Users, Plus, ArrowRight, ArrowLeft } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
+import { Button } from '@/components/ui/button'
 
 export const Route = createFileRoute('/room/')({
   component: RoomLobby,
@@ -129,13 +130,12 @@ function RoomLobby() {
     <div className="min-h-screen bg-linear-to-b from-slate-900 via-slate-800 to-slate-900 flex flex-col">
       {/* Header */}
       <header className="fixed top-0 left-0 p-4 flex items-center">
-        <Link
-          to="/"
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span>Retour</span>
-        </Link>
+        <Button variant="ghost" asChild className="text-gray-400 hover:text-white">
+          <Link to="/">
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            Retour
+          </Link>
+        </Button>
       </header>
 
       {/* Main content */}
@@ -259,14 +259,14 @@ function RoomLobby() {
               </div>
             </div>
 
-            <button
+            <Button
               onClick={handleCreateRoom}
               disabled={loading}
-              className="w-full py-3 bg-pink-500 hover:bg-pink-600 disabled:bg-slate-600 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+              className="w-full bg-pink-500 hover:bg-pink-600"
             >
               {loading ? 'Création...' : 'Créer une partie'}
-              {!loading && <ArrowRight className="w-5 h-5" />}
-            </button>
+              {!loading && <ArrowRight className="w-5 h-5 ml-2" />}
+            </Button>
           </div>
 
           {/* Join room section */}
@@ -290,14 +290,15 @@ function RoomLobby() {
               />
             </div>
 
-            <button
+            <Button
               onClick={handleJoinRoom}
               disabled={loading}
-              className="w-full py-3 bg-cyan-500 hover:bg-cyan-600 disabled:bg-slate-600 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+              variant="secondary"
+              className="w-full bg-cyan-500 hover:bg-cyan-600 text-white"
             >
               {loading ? 'Connexion...' : 'Rejoindre'}
-              {!loading && <ArrowRight className="w-5 h-5" />}
-            </button>
+              {!loading && <ArrowRight className="w-5 h-5 ml-2" />}
+            </Button>
           </div>
         </div>
       </main>
