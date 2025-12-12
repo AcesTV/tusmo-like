@@ -466,6 +466,13 @@ function RoomPage() {
     return (
       <div className="min-h-screen bg-linear-to-b from-slate-900 to-slate-800 flex flex-col">
         <header className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
+          <Link
+            to="/room"
+            className="flex items-center gap-2 text-gray-400 hover:text-white"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span>Retour</span>
+          </Link>
           <div className="text-center">
             <div className="text-sm text-gray-400">
               Mot {currentWord.wordIndex + 1}/{currentWord.totalWords}
