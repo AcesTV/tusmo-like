@@ -351,7 +351,7 @@ function GamePage() {
   // Show "already completed" screen for daily/suite modes
   if ((mode === 'daily' || mode === 'suite') && dailyCompletion?.completed) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 flex flex-col">
+      <div className="min-h-screen bg-linear-to-b from-slate-900 to-slate-800 flex flex-col">
         <header className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
           <Link
             to="/"

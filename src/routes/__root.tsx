@@ -32,7 +32,56 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'Tusmo - Jeu de mots',
+        title: 'TUSMO - Devinez le mot mystère',
+      },
+      {
+        name: 'description',
+        content:
+          'Jeu de devinettes de mots en français. Trouvez le mot mystère en 6 essais maximum !',
+      },
+      {
+        name: 'theme-color',
+        content: '#0f172a',
+      },
+      // Open Graph (Facebook, Discord, etc.)
+      {
+        property: 'og:type',
+        content: 'website',
+      },
+      {
+        property: 'og:title',
+        content: 'TUSMO - Devinez le mot mystère',
+      },
+      {
+        property: 'og:description',
+        content:
+          'Jeu de devinettes de mots en français. Trouvez le mot mystère en 6 essais maximum ! Mode quotidien, suite du jour, partie libre et multijoueur.',
+      },
+      {
+        property: 'og:image',
+        content: '/og-image.png',
+      },
+      {
+        property: 'og:locale',
+        content: 'fr_FR',
+      },
+      // Twitter Card
+      {
+        name: 'twitter:card',
+        content: 'summary_large_image',
+      },
+      {
+        name: 'twitter:title',
+        content: 'TUSMO - Devinez le mot mystère',
+      },
+      {
+        name: 'twitter:description',
+        content:
+          'Jeu de devinettes de mots en français. Trouvez le mot mystère en 6 essais maximum !',
+      },
+      {
+        name: 'twitter:image',
+        content: '/og-image.png',
       },
     ],
     links: [
